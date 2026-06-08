@@ -39,7 +39,6 @@ Canonical security policy and reporting:
 
 - [`SECURITY.md`](SECURITY.md)
 
-
 Generated source proofs should be inspectable and should not hide external
 scripts, telemetry, or privileged browser behavior inside small demo files.
 
