@@ -17,6 +17,7 @@ Priority:
 - Preserve the `poe-source` artifact structure
 - Keep the demo script and HTML minimal and readable
 - Make generated-source provenance clear
+- Maintain `make check` for manifest and source proof validation
 - Avoid adding runtime dependencies without a manifest update
 
 Next priorities:

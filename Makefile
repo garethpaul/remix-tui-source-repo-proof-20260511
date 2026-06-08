@@ -1,4 +1,4 @@
-.PHONY: lint test build verify
+.PHONY: build check lint test verify
 
 lint:
 	node scripts/check-proof-source.js
@@ -9,3 +9,5 @@ build:
 	@echo "static source proof; no build step required"
 
 verify: lint test build
+
+check: verify

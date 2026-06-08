@@ -45,8 +45,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 ## Testing and Verification
 
-- Run `make verify` before committing proof source changes.
-- `make verify` runs the dependency-free source proof smoke checks for manifest metadata, local HTML links, and the `GameLogic.runDemo()` summary.
+- Run `make check` before committing proof source changes.
+- `make check` delegates to `make verify`, which runs the dependency-free source proof smoke checks for manifest metadata, local HTML links, and the `GameLogic.runDemo()` summary.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
