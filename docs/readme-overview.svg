@@ -11,8 +11,8 @@
   <text x="76" y="82" font-size="36" fill="#ffffff" font-weight="700">remix-tui-source-repo-proof-20260511</text>
   <text x="76" y="124" font-size="20" fill="#cbd5e1">static web project</text>
   <text x="76" y="206" font-size="24" fill="#111827">remix-tui-source-repo-proof-20260511 Overview `garethpaul/remix-tui-</text>
-<text x="76" y="240" font-size="24" fill="#111827">source-repo-proof-20260511` is a static web project. No GitHub</text>
-<text x="76" y="274" font-size="24" fill="#111827">description is currently set. This README is based on the checked-in</text>
+<text x="76" y="240" font-size="24" fill="#111827">source-repo-proof-20260511` is a static web project. The checked-in</text>
+<text x="76" y="274" font-size="24" fill="#111827">files describe a static web project with the structure summarized</text>
 
   <rect x="76" y="286" width="316" height="276" rx="14" fill="#eff6ff" stroke="#bfdbfe"/>
   <text x="102" y="328" font-size="24" font-weight="700" fill="#1d4ed8">Code Shape</text>
