@@ -8,3 +8,5 @@
 - Documented `make verify` and `make check` as repository verification commands.
 - Added proof manifest metadata for demo name, source root, entrypoint,
   generated date, and expected `GameLogic.runDemo()` output.
+- Added canonical `docs/plans` coverage and made the proof source validator
+  require completed plans.

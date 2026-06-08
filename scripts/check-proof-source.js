@@ -8,6 +8,8 @@ const vm = require('vm');
 const root = path.resolve(__dirname, '..');
 const sourceRoot = path.join(root, 'poe-source');
 const manifestPath = path.join(sourceRoot, 'PACKAGE_MANIFEST.json');
+const plansRoot = path.join(root, 'docs', 'plans');
+const canonicalPlanPath = path.join(plansRoot, '2026-06-08-remix-tui-source-proof-baseline.md');
 const failures = [];
 let expectedDemoSummary = 'Repo crystal rally source complete';
 
@@ -81,6 +83,30 @@ if (!fs.existsSync(manifestPath)) {
       failures.push(`manifest files ${JSON.stringify(listedFiles)} do not match source files ${JSON.stringify(actualFiles)}`);
     }
   }
+}
+
+if (!fs.existsSync(canonicalPlanPath)) {
+  failures.push('docs/plans/2026-06-08-remix-tui-source-proof-baseline.md is missing');
+}
+
+if (!fs.existsSync(plansRoot)) {
+  failures.push('docs/plans must contain at least one completed plan');
+} else {
+  const docsPlans = fs.readdirSync(plansRoot)
+    .filter((file) => file.endsWith('.md'))
+    .map((file) => path.join(plansRoot, file))
+    .sort();
+
+  if (docsPlans.length === 0) {
+    failures.push('docs/plans must contain at least one completed plan');
+  }
+
+  docsPlans.forEach((planPath) => {
+    const plan = readText(planPath);
+    if (!plan.includes('Status: Completed') || !plan.includes('make check')) {
+      failures.push(`${rel(planPath)} must record completed status and make check verification`);
+    }
+  });
 }
 
 const htmlPath = path.join(sourceRoot, 'index.html');
