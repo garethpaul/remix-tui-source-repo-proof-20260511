@@ -45,6 +45,7 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 ## Testing and Verification
 
 - No dedicated automated test command was identified from the checked-in files. Verify changes by running the relevant build or manually exercising the sample.
+- `make verify` runs the dependency-free source proof smoke checks.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
