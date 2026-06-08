@@ -38,7 +38,7 @@ Contribution rules:
 Generated source proofs should be inspectable and should not hide external
 scripts, telemetry, or privileged browser behavior inside small demo files.
 
-## What We Will Not Merge For Now
+## What We Will Not Merge (For Now)
 
 - Hidden remote scripts
 - Unexplained generated rewrites
