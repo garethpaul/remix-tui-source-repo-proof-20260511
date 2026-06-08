@@ -47,11 +47,13 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 - Open `poe-source/index.html` directly in a browser, or serve it locally with `python3 -m http.server --directory poe-source 8000`.
 - The proof manifest identifies `index.html` as the entrypoint and documents the expected `GameLogic.runDemo()` summary: `Repo crystal rally source complete`.
+- The proof HTML and manifest declare a self-only Content Security Policy for
+  scripts, styles, base URIs, and object content.
 
 ## Testing and Verification
 
 - Run `make check` before committing proof source changes.
-- `make check` delegates to `make verify`, which runs the dependency-free source proof smoke checks for manifest metadata, local HTML links, and the `GameLogic.runDemo()` summary.
+- `make check` delegates to `make verify`, which runs the dependency-free source proof smoke checks for manifest metadata, local HTML links, the self-only security policy, and the `GameLogic.runDemo()` summary.
 - The source proof validator also requires completed canonical plans under `docs/plans`.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.

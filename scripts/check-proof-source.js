@@ -10,6 +10,7 @@ const sourceRoot = path.join(root, 'poe-source');
 const manifestPath = path.join(sourceRoot, 'PACKAGE_MANIFEST.json');
 const plansRoot = path.join(root, 'docs', 'plans');
 const canonicalPlanPath = path.join(plansRoot, '2026-06-08-remix-tui-source-proof-baseline.md');
+const expectedSecurityPolicy = "default-src 'self'; script-src 'self'; style-src 'self'; base-uri 'none'; object-src 'none'";
 const failures = [];
 let expectedDemoSummary = 'Repo crystal rally source complete';
 
@@ -61,6 +62,10 @@ if (!fs.existsSync(manifestPath)) {
       failures.push('poe-source/PACKAGE_MANIFEST.json must include a non-empty expectedDemoSummary');
     } else {
       expectedDemoSummary = manifest.expectedDemoSummary;
+    }
+
+    if (manifest.securityPolicy !== expectedSecurityPolicy) {
+      failures.push('poe-source/PACKAGE_MANIFEST.json must include the expected self-only securityPolicy');
     }
 
     const manifestFiles = Array.isArray(manifest.files) ? manifest.files : [];
@@ -125,6 +130,12 @@ if (!fs.existsSync(htmlPath)) {
   }
   if (!/<meta\b[^>]*name=["']viewport["'][^>]*>/i.test(html)) {
     failures.push('poe-source/index.html must declare a viewport meta tag');
+  }
+  const cspMatch = html.match(/<meta\b(?=[^>]*http-equiv=["']Content-Security-Policy["'])(?=[^>]*content=(["'])(.*?)\1)[^>]*>/i);
+  if (!cspMatch) {
+    failures.push('poe-source/index.html must declare a Content-Security-Policy meta tag');
+  } else if (cspMatch[2] !== expectedSecurityPolicy) {
+    failures.push('poe-source/index.html must use the expected self-only Content-Security-Policy');
   }
 
   const linkedFiles = [];

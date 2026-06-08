@@ -4,5 +4,6 @@
   "entrypoint": "index.html",
   "generatedAt": "2026-05-11",
   "expectedDemoSummary": "Repo crystal rally source complete",
+  "securityPolicy": "default-src 'self'; script-src 'self'; style-src 'self'; base-uri 'none'; object-src 'none'",
   "files": ["index.html", "game.js", "assets/styles.css", "PACKAGE_MANIFEST.json"]
 }

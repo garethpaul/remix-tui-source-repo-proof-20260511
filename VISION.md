@@ -18,6 +18,7 @@ Priority:
 - Keep the demo script and HTML minimal and readable
 - Make generated-source provenance clear
 - Maintain `make check` for manifest and source proof validation
+- Keep browser execution constrained to local scripts and styles
 - Keep completed maintenance plans under `docs/plans`
 - Avoid adding runtime dependencies without a manifest update
 

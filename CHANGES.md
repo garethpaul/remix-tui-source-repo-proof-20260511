@@ -2,6 +2,7 @@
 
 ## 2026-06-08
 
+- Added a self-only Content Security Policy to the proof source and manifest.
 - Added a dependency-free source proof smoke check for the package manifest,
   local HTML asset links, document metadata, and `GameLogic.runDemo()`.
 - Added missing `lang`, `charset`, and viewport metadata to the proof HTML.
