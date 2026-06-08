@@ -5,5 +5,10 @@
   "generatedAt": "2026-05-11",
   "expectedDemoSummary": "Repo crystal rally source complete",
   "securityPolicy": "default-src 'self'; script-src 'self'; style-src 'self'; base-uri 'none'; object-src 'none'",
+  "fileDigests": {
+    "index.html": "7501abf308095cf52e064069b27370e7e89a4e8b9c721c163c76912fece75816",
+    "game.js": "2c2b21c6ebc5abd82ff06edbdb1a3ee2ff9d04b5a79a6c015ca47f9b64b7f48e",
+    "assets/styles.css": "b9a241c8c1f94d0083b8349986dd845ea1ef56a26fee933f8ec8d27f03736963"
+  },
   "files": ["index.html", "game.js", "assets/styles.css", "PACKAGE_MANIFEST.json"]
 }

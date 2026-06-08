@@ -2,6 +2,8 @@
 
 ## 2026-06-08
 
+- Added manifest SHA-256 digest validation for the proof HTML, JavaScript, and
+  CSS files.
 - Added a self-only Content Security Policy to the proof source and manifest.
 - Added a dependency-free source proof smoke check for the package manifest,
   local HTML asset links, document metadata, and `GameLogic.runDemo()`.

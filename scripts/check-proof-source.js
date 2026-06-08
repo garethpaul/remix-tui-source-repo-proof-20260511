@@ -2,6 +2,7 @@
 'use strict';
 
 const fs = require('fs');
+const crypto = require('crypto');
 const path = require('path');
 const vm = require('vm');
 
@@ -20,6 +21,10 @@ function rel(filePath) {
 
 function readText(filePath) {
   return fs.readFileSync(filePath, 'utf8');
+}
+
+function sha256Hex(filePath) {
+  return crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
 }
 
 function walkFiles(dir) {
@@ -79,6 +84,30 @@ if (!fs.existsSync(manifestPath)) {
         failures.push(`manifest lists missing file ${file}`);
       }
     });
+
+    const digestFiles = manifestFiles.filter((file) => file !== 'PACKAGE_MANIFEST.json');
+    const fileDigests = manifest.fileDigests;
+    if (!fileDigests || typeof fileDigests !== 'object' || Array.isArray(fileDigests)) {
+      failures.push('poe-source/PACKAGE_MANIFEST.json must include a fileDigests object for non-manifest files');
+    } else {
+      digestFiles.forEach((file) => {
+        const expectedDigest = fileDigests[file];
+        const filePath = path.join(sourceRoot, file);
+        if (typeof expectedDigest !== 'string' || !/^[a-f0-9]{64}$/.test(expectedDigest)) {
+          failures.push(`manifest fileDigests must include a SHA-256 hex digest for ${file}`);
+          return;
+        }
+        if (fs.existsSync(filePath) && fs.statSync(filePath).isFile() && sha256Hex(filePath) !== expectedDigest) {
+          failures.push(`manifest digest for ${file} does not match checked-in file contents`);
+        }
+      });
+
+      Object.keys(fileDigests)
+        .filter((file) => !digestFiles.includes(file))
+        .forEach((file) => {
+          failures.push(`manifest fileDigests includes unexpected file ${file}`);
+        });
+    }
 
     const actualFiles = walkFiles(sourceRoot)
       .map((filePath) => path.relative(sourceRoot, filePath).replaceAll(path.sep, '/'))

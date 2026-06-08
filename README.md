@@ -49,11 +49,13 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - The proof manifest identifies `index.html` as the entrypoint and documents the expected `GameLogic.runDemo()` summary: `Repo crystal rally source complete`.
 - The proof HTML and manifest declare a self-only Content Security Policy for
   scripts, styles, base URIs, and object content.
+- The proof manifest records SHA-256 digests for the HTML, JavaScript, and CSS
+  proof files.
 
 ## Testing and Verification
 
 - Run `make check` before committing proof source changes.
-- `make check` delegates to `make verify`, which runs the dependency-free source proof smoke checks for manifest metadata, local HTML links, the self-only security policy, and the `GameLogic.runDemo()` summary.
+- `make check` delegates to `make verify`, which runs the dependency-free source proof smoke checks for manifest metadata, file digests, local HTML links, the self-only security policy, and the `GameLogic.runDemo()` summary.
 - The source proof validator also requires completed canonical plans under `docs/plans`.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
@@ -72,6 +74,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - See `VISION.md` for project direction and contribution guardrails.
 - See `docs/plans/2026-06-08-remix-tui-source-proof-baseline.md` for the
   canonical static proof validation baseline.
+- See `docs/plans/2026-06-08-proof-file-digests.md` for the proof digest
+  validation baseline.
 
 ## Contributing
 
