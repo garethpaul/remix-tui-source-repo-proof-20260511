@@ -44,3 +44,6 @@ scripts, telemetry, or privileged browser behavior inside small demo files.
 - Unexplained generated rewrites
 - Runtime dependencies missing from the manifest
 - Claims of broader app behavior than the source implements
+
+This list is a roadmap guardrail, not a permanent rule.
+Strong user demand and strong technical rationale can change it.
