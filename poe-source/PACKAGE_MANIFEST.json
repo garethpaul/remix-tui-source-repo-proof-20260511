@@ -1,3 +1,8 @@
 {
+  "name": "Repo Crystal Rally",
+  "sourceRoot": "poe-source",
+  "entrypoint": "index.html",
+  "generatedAt": "2026-05-11",
+  "expectedDemoSummary": "Repo crystal rally source complete",
   "files": ["index.html", "game.js", "assets/styles.css", "PACKAGE_MANIFEST.json"]
 }

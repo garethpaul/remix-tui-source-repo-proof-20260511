@@ -9,6 +9,7 @@ const root = path.resolve(__dirname, '..');
 const sourceRoot = path.join(root, 'poe-source');
 const manifestPath = path.join(sourceRoot, 'PACKAGE_MANIFEST.json');
 const failures = [];
+let expectedDemoSummary = 'Repo crystal rally source complete';
 
 function rel(filePath) {
   return path.relative(root, filePath).replaceAll(path.sep, '/');
@@ -39,6 +40,27 @@ if (!fs.existsSync(manifestPath)) {
   }
 
   if (manifest) {
+    const requiredManifestFields = {
+      name: 'Repo Crystal Rally',
+      sourceRoot: 'poe-source',
+      entrypoint: 'index.html',
+    };
+    Object.entries(requiredManifestFields).forEach(([field, expectedValue]) => {
+      if (manifest[field] !== expectedValue) {
+        failures.push(`poe-source/PACKAGE_MANIFEST.json must set ${field} to ${JSON.stringify(expectedValue)}`);
+      }
+    });
+
+    if (typeof manifest.generatedAt !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(manifest.generatedAt)) {
+      failures.push('poe-source/PACKAGE_MANIFEST.json must include generatedAt as YYYY-MM-DD');
+    }
+
+    if (typeof manifest.expectedDemoSummary !== 'string' || manifest.expectedDemoSummary.trim() === '') {
+      failures.push('poe-source/PACKAGE_MANIFEST.json must include a non-empty expectedDemoSummary');
+    } else {
+      expectedDemoSummary = manifest.expectedDemoSummary;
+    }
+
     const manifestFiles = Array.isArray(manifest.files) ? manifest.files : [];
     if (manifestFiles.length === 0 || manifestFiles.some((file) => typeof file !== 'string' || file.trim() === '')) {
       failures.push('poe-source/PACKAGE_MANIFEST.json must contain a non-empty string files array');
@@ -106,7 +128,7 @@ if (!fs.existsSync(gamePath)) {
   try {
     vm.runInNewContext(readText(gamePath), sandbox, { filename: rel(gamePath) });
     const result = sandbox.globalThis.GameLogic && sandbox.globalThis.GameLogic.runDemo();
-    if (!result || result.complete !== true || result.summary !== 'Repo crystal rally source complete') {
+    if (!result || result.complete !== true || result.summary !== expectedDemoSummary) {
       failures.push('GameLogic.runDemo() must return the documented proof summary');
     }
   } catch (error) {

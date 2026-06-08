@@ -40,12 +40,13 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 ## Running or Using the Project
 
-- No single runtime entry point was identified. Start by reading the source files and manifests listed above.
+- Open `poe-source/index.html` directly in a browser, or serve it locally with `python3 -m http.server --directory poe-source 8000`.
+- The proof manifest identifies `index.html` as the entrypoint and documents the expected `GameLogic.runDemo()` summary: `Repo crystal rally source complete`.
 
 ## Testing and Verification
 
-- No dedicated automated test command was identified from the checked-in files. Verify changes by running the relevant build or manually exercising the sample.
-- `make verify` runs the dependency-free source proof smoke checks.
+- Run `make verify` before committing proof source changes.
+- `make verify` runs the dependency-free source proof smoke checks for manifest metadata, local HTML links, and the `GameLogic.runDemo()` summary.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 

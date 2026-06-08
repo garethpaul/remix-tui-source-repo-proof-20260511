@@ -21,10 +21,9 @@ Priority:
 
 Next priorities:
 
-- Add a README that explains how the proof artifact was generated
-- Include a local run command for opening or serving the demo
-- Document expected output from `GameLogic.runDemo()`
-- Add a simple smoke check for the HTML and script link
+- Keep manifest metadata aligned with proof source changes
+- Document the generator or prompt lineage if this proof is regenerated
+- Add browser-level smoke coverage if the demo grows beyond static markup
 
 Contribution rules:
 
