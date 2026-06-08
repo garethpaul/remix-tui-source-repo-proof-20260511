@@ -1,16 +1,14 @@
 # remix-tui-source-repo-proof-20260511
 
-<!-- README-OVERVIEW-IMAGE -->
-![Project overview](docs/readme-overview.svg)
-
 ## Overview
 
-`garethpaul/remix-tui-source-repo-proof-20260511` is a static web project. No GitHub description is currently set.
+`garethpaul/remix-tui-source-repo-proof-20260511` is a static web project. The checked-in files describe a static web project with the structure summarized below.
 
 This README is based on the checked-in source, manifests, scripts, and repository metadata on the `main` branch. The project language mix found during review was: JavaScript (1).
 
 ## Repository Contents
 
+- `README.md` - project overview and local usage notes
 - `poe-source` - source or example code
 - `SECURITY.md` - security reporting and disclosure guidance
 - `VISION.md` - project direction and maintenance guardrails
@@ -63,3 +61,4 @@ When the required SDK or runtime is unavailable, use static checks and source re
 ## Contributing
 
 Keep changes small and tied to the project that is already present in this repository. For code changes, document the toolchain used, avoid committing generated dependency directories or local configuration, and update this README when setup or verification steps change.
+
