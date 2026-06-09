@@ -254,9 +254,58 @@ if (!fs.existsSync(gamePath)) {
   const sandbox = { globalThis: {} };
   try {
     vm.runInNewContext(readText(gamePath), sandbox, { filename: rel(gamePath) });
-    const result = sandbox.globalThis.GameLogic && sandbox.globalThis.GameLogic.runDemo();
+    const gameLogic = sandbox.globalThis.GameLogic;
+    const result = gameLogic && gameLogic.runDemo();
     if (!result || result.complete !== true || result.summary !== expectedDemoSummary) {
       failures.push('GameLogic.runDemo() must return the documented proof summary');
+    }
+    if (!gameLogic || typeof gameLogic.statusForAction !== 'function') {
+      failures.push('GameLogic.statusForAction(action) must expose demo status text for each action');
+    } else {
+      const expectedActionStatuses = {
+        charge: 'Player 1 crystal paddle charged',
+        release: 'Player 1 released the crystal beam',
+      };
+      Object.entries(expectedActionStatuses).forEach(([action, expectedStatus]) => {
+        if (gameLogic.statusForAction(action) !== expectedStatus) {
+          failures.push(`GameLogic.statusForAction(${JSON.stringify(action)}) must return ${JSON.stringify(expectedStatus)}`);
+        }
+      });
+      if (gameLogic.statusForAction('unknown-action') !== expectedDemoSummary) {
+        failures.push('GameLogic.statusForAction() must fall back to the documented proof summary for unknown actions');
+      }
+    }
+    if (!gameLogic || typeof gameLogic.bindDemoActions !== 'function') {
+      failures.push('GameLogic.bindDemoActions(document) must wire demo buttons to the status live region');
+    } else {
+      const handlers = {};
+      const statusElement = { textContent: 'Repo crystal source ready' };
+      const buttons = ['charge', 'release'].map((action) => ({
+        dataset: { demoAction: action },
+        addEventListener(eventName, handler) {
+          handlers[action] = { eventName, handler };
+        },
+      }));
+      const fakeDocument = {
+        getElementById(id) {
+          return id === 'status' ? statusElement : null;
+        },
+        querySelectorAll(selector) {
+          return selector === '[data-demo-action]' ? buttons : [];
+        },
+      };
+      gameLogic.bindDemoActions(fakeDocument);
+      ['charge', 'release'].forEach((action) => {
+        if (!handlers[action] || handlers[action].eventName !== 'click') {
+          failures.push(`GameLogic.bindDemoActions(document) must attach a click handler for ${action}`);
+          return;
+        }
+        handlers[action].handler();
+        const expectedStatus = gameLogic.statusForAction(action);
+        if (statusElement.textContent !== expectedStatus) {
+          failures.push(`GameLogic ${action} click handler must update the status live region`);
+        }
+      });
     }
   } catch (error) {
     failures.push(`poe-source/game.js failed smoke execution: ${error.message}`);

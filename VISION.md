@@ -25,6 +25,7 @@ Priority:
 - Keep proof status announcements atomic for assistive technology
 - Keep proof demo action buttons explicit non-submit controls
 - Keep proof demo button keyboard focus visibly styled
+- Keep proof demo action buttons wired to visible status updates
 - Keep completed maintenance plans under `docs/plans`
 - Avoid adding runtime dependencies without a manifest update
 

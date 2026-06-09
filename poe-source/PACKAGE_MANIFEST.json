@@ -7,7 +7,7 @@
   "securityPolicy": "default-src 'self'; script-src 'self'; style-src 'self'; base-uri 'none'; object-src 'none'",
   "fileDigests": {
     "index.html": "1af2be93933985de99c23b366180a8e1ffe2d9f052d647b1d22bad0c27c11caa",
-    "game.js": "2c2b21c6ebc5abd82ff06edbdb1a3ee2ff9d04b5a79a6c015ca47f9b64b7f48e",
+    "game.js": "e5894d76c5b1f90223b61a2b15da96c89b8a399e9b5600a0519e5874bbcf5ba2",
     "assets/styles.css": "01549ef1fe5469be4a745688fcea06c464ddeb4cb0a73700ce9e84a6f53e89d5"
   },
   "files": ["index.html", "game.js", "assets/styles.css", "PACKAGE_MANIFEST.json"]
