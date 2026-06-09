@@ -21,6 +21,7 @@ Priority:
 - Keep proof file digests aligned with checked-in source contents
 - Keep browser execution constrained to local scripts and styles
 - Keep manifest and HTML asset paths contained within `poe-source`
+- Keep visible proof status text exposed as a polite live region
 - Keep completed maintenance plans under `docs/plans`
 - Avoid adding runtime dependencies without a manifest update
 

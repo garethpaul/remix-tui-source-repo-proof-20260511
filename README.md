@@ -53,6 +53,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   proof files.
 - The proof validator keeps manifest entries and HTML asset references inside
   `poe-source`.
+- The proof status message is exposed as a polite live region for assistive
+  technology.
 
 ## Testing and Verification
 
@@ -60,6 +62,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make check` delegates to `make verify`, which runs the dependency-free source proof smoke checks for manifest metadata, file digests, local HTML links, the self-only security policy, and the `GameLogic.runDemo()` summary.
 - The local path checks reject manifest entries or HTML asset references that
   try to escape `poe-source`.
+- The HTML checks also require the visible status message to keep `role="status"`
+  and `aria-live="polite"`.
 - The source proof validator also requires completed canonical plans under `docs/plans`.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
@@ -82,6 +86,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   validation baseline.
 - See `docs/plans/2026-06-09-proof-path-containment.md` for the source-root
   path containment guard.
+- See `docs/plans/2026-06-09-proof-status-live-region.md` for the proof status
+  live-region guard.
 
 ## Contributing
 

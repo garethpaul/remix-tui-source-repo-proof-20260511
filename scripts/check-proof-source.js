@@ -178,6 +178,12 @@ if (!fs.existsSync(htmlPath)) {
   if (!/<meta\b[^>]*name=["']viewport["'][^>]*>/i.test(html)) {
     failures.push('poe-source/index.html must declare a viewport meta tag');
   }
+  const statusMatch = html.match(/<p\b(?=[^>]*\bid=["']status["'])[^>]*>/i);
+  if (!statusMatch) {
+    failures.push('poe-source/index.html must include a status message element');
+  } else if (!/\brole=["']status["']/i.test(statusMatch[0]) || !/\baria-live=["']polite["']/i.test(statusMatch[0])) {
+    failures.push('poe-source/index.html status message must be a polite live region');
+  }
   const cspMatch = html.match(/<meta\b(?=[^>]*http-equiv=["']Content-Security-Policy["'])(?=[^>]*content=(["'])(.*?)\1)[^>]*>/i);
   if (!cspMatch) {
     failures.push('poe-source/index.html must declare a Content-Security-Policy meta tag');
