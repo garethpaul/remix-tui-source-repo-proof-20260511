@@ -26,6 +26,9 @@ Helpful reports include:
 
 - This repository appears to be a public sample, documentation, or utility project. The active security scope is the code and documentation on the default branch.
 - Review found file, document, data, or media parsing flows; changes in those areas should receive security-focused review before merge.
+- Proof manifest entries and HTML asset references should remain contained
+  within `poe-source`; parent-directory escapes or absolute proof paths should
+  be treated as suspicious.
 - No primary dependency manifest was detected in the repository root. If dependencies are added later, include a manifest and prefer reproducible installation instructions.
 
 

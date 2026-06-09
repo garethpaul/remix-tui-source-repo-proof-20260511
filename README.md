@@ -51,11 +51,15 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   scripts, styles, base URIs, and object content.
 - The proof manifest records SHA-256 digests for the HTML, JavaScript, and CSS
   proof files.
+- The proof validator keeps manifest entries and HTML asset references inside
+  `poe-source`.
 
 ## Testing and Verification
 
 - Run `make check` before committing proof source changes.
 - `make check` delegates to `make verify`, which runs the dependency-free source proof smoke checks for manifest metadata, file digests, local HTML links, the self-only security policy, and the `GameLogic.runDemo()` summary.
+- The local path checks reject manifest entries or HTML asset references that
+  try to escape `poe-source`.
 - The source proof validator also requires completed canonical plans under `docs/plans`.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
@@ -76,6 +80,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   canonical static proof validation baseline.
 - See `docs/plans/2026-06-08-proof-file-digests.md` for the proof digest
   validation baseline.
+- See `docs/plans/2026-06-09-proof-path-containment.md` for the source-root
+  path containment guard.
 
 ## Contributing
 

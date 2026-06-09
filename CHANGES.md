@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-09
+
+- Added source-root containment checks so proof manifest entries and HTML asset
+  references cannot escape `poe-source`.
+
 ## 2026-06-08
 
 - Added manifest SHA-256 digest validation for the proof HTML, JavaScript, and

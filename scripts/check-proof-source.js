@@ -27,6 +27,15 @@ function sha256Hex(filePath) {
   return crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
 }
 
+function sourcePathFor(reference) {
+  return path.resolve(sourceRoot, reference);
+}
+
+function staysWithinSourceRoot(filePath) {
+  const relativePath = path.relative(sourceRoot, filePath);
+  return relativePath === '' || (!relativePath.startsWith('..') && !path.isAbsolute(relativePath));
+}
+
 function walkFiles(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const entryPath = path.join(dir, entry.name);
@@ -79,7 +88,11 @@ if (!fs.existsSync(manifestPath)) {
     }
 
     manifestFiles.forEach((file) => {
-      const filePath = path.join(sourceRoot, file);
+      const filePath = sourcePathFor(file);
+      if (!staysWithinSourceRoot(filePath)) {
+        failures.push(`manifest file ${file} must stay within poe-source`);
+        return;
+      }
       if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
         failures.push(`manifest lists missing file ${file}`);
       }
@@ -92,12 +105,17 @@ if (!fs.existsSync(manifestPath)) {
     } else {
       digestFiles.forEach((file) => {
         const expectedDigest = fileDigests[file];
-        const filePath = path.join(sourceRoot, file);
+        const filePath = sourcePathFor(file);
         if (typeof expectedDigest !== 'string' || !/^[a-f0-9]{64}$/.test(expectedDigest)) {
           failures.push(`manifest fileDigests must include a SHA-256 hex digest for ${file}`);
           return;
         }
-        if (fs.existsSync(filePath) && fs.statSync(filePath).isFile() && sha256Hex(filePath) !== expectedDigest) {
+        if (
+          staysWithinSourceRoot(filePath) &&
+          fs.existsSync(filePath) &&
+          fs.statSync(filePath).isFile() &&
+          sha256Hex(filePath) !== expectedDigest
+        ) {
           failures.push(`manifest digest for ${file} does not match checked-in file contents`);
         }
       });
@@ -176,7 +194,11 @@ if (!fs.existsSync(htmlPath)) {
     }
     linkedFiles.push(reference);
     const normalized = reference.replace(/^\.\//, '');
-    const filePath = path.join(sourceRoot, normalized);
+    const filePath = sourcePathFor(normalized);
+    if (!staysWithinSourceRoot(filePath)) {
+      failures.push(`poe-source/index.html local asset ${reference} must stay within poe-source`);
+      continue;
+    }
     if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
       failures.push(`poe-source/index.html references missing asset ${reference}`);
     }

@@ -20,6 +20,7 @@ Priority:
 - Maintain `make check` for manifest and source proof validation
 - Keep proof file digests aligned with checked-in source contents
 - Keep browser execution constrained to local scripts and styles
+- Keep manifest and HTML asset paths contained within `poe-source`
 - Keep completed maintenance plans under `docs/plans`
 - Avoid adding runtime dependencies without a manifest update
 
