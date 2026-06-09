@@ -22,6 +22,7 @@ Priority:
 - Keep browser execution constrained to local scripts and styles
 - Keep manifest and HTML asset paths contained within `poe-source`
 - Keep visible proof status text exposed as a polite live region
+- Keep proof status announcements atomic for assistive technology
 - Keep proof demo action buttons explicit non-submit controls
 - Keep completed maintenance plans under `docs/plans`
 - Avoid adding runtime dependencies without a manifest update

@@ -6,7 +6,7 @@
   "expectedDemoSummary": "Repo crystal rally source complete",
   "securityPolicy": "default-src 'self'; script-src 'self'; style-src 'self'; base-uri 'none'; object-src 'none'",
   "fileDigests": {
-    "index.html": "2f1e4a667ce54c5128f68c9014befd72198f8a09997331abb6f2335678a7507d",
+    "index.html": "1af2be93933985de99c23b366180a8e1ffe2d9f052d647b1d22bad0c27c11caa",
     "game.js": "2c2b21c6ebc5abd82ff06edbdb1a3ee2ff9d04b5a79a6c015ca47f9b64b7f48e",
     "assets/styles.css": "b9a241c8c1f94d0083b8349986dd845ea1ef56a26fee933f8ec8d27f03736963"
   },

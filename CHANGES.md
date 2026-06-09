@@ -2,6 +2,8 @@
 
 ## 2026-06-09
 
+- Required the proof status live region to be atomic and refreshed the
+  validator coverage plus manifest digest.
 - Added explicit non-submit types to proof demo action buttons and validator
   coverage for that markup contract.
 - Marked the proof page status message as a polite live region and added

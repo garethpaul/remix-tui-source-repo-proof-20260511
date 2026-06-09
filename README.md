@@ -63,8 +63,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - The local path checks reject manifest entries or HTML asset references that
   try to escape `poe-source`.
 - The HTML checks also require the visible status message to keep `role="status"`
-  and `aria-live="polite"`, and require proof demo action buttons to declare
-  `type="button"`.
+  with `aria-live="polite"` and `aria-atomic="true"`, and require proof demo
+  action buttons to declare `type="button"`.
 - The source proof validator also requires completed canonical plans under `docs/plans`.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
@@ -89,6 +89,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   path containment guard.
 - See `docs/plans/2026-06-09-proof-status-live-region.md` for the proof status
   live-region guard.
+- See `docs/plans/2026-06-09-proof-status-atomic.md` for the proof status
+  atomic live-region guard.
 - See `docs/plans/2026-06-09-proof-button-type-guard.md` for the proof demo
   button type guard.
 

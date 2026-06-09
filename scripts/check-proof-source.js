@@ -181,8 +181,12 @@ if (!fs.existsSync(htmlPath)) {
   const statusMatch = html.match(/<p\b(?=[^>]*\bid=["']status["'])[^>]*>/i);
   if (!statusMatch) {
     failures.push('poe-source/index.html must include a status message element');
-  } else if (!/\brole=["']status["']/i.test(statusMatch[0]) || !/\baria-live=["']polite["']/i.test(statusMatch[0])) {
-    failures.push('poe-source/index.html status message must be a polite live region');
+  } else if (
+    !/\brole=["']status["']/i.test(statusMatch[0]) ||
+    !/\baria-live=["']polite["']/i.test(statusMatch[0]) ||
+    !/\baria-atomic=["']true["']/i.test(statusMatch[0])
+  ) {
+    failures.push('poe-source/index.html status message must be an atomic polite live region');
   }
   const cspMatch = html.match(/<meta\b(?=[^>]*http-equiv=["']Content-Security-Policy["'])(?=[^>]*content=(["'])(.*?)\1)[^>]*>/i);
   if (!cspMatch) {
