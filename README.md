@@ -71,6 +71,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   `button:focus-visible` outline.
 - The JavaScript checks require demo action buttons to expose deterministic
   status text and update the live region when clicked.
+- The HTML checks require demo action buttons to declare that they control the
+  status live region.
 - The source proof validator also requires completed canonical plans under `docs/plans`.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
@@ -103,6 +105,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   keyboard focus guard.
 - See `docs/plans/2026-06-09-proof-demo-button-status.md` for the proof demo
   button status guard.
+- See `docs/plans/2026-06-09-proof-button-status-controls.md` for the proof
+  demo button `aria-controls` guard.
 
 ## Contributing
 

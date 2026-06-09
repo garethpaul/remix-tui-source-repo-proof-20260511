@@ -2,6 +2,8 @@
 
 ## 2026-06-09
 
+- Associated proof demo buttons with the status live region and added
+  validator coverage for `aria-controls`.
 - Wired proof demo buttons to update the status live region and added validator
   coverage for action status text and click-handler behavior.
 - Added an explicit visible `button:focus-visible` style and validator guard

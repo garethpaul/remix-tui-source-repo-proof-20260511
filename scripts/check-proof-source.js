@@ -226,6 +226,9 @@ if (!fs.existsSync(htmlPath)) {
     if (!/\btype=["']button["']/i.test(match[0])) {
       failures.push(`poe-source/index.html demo action button ${match[1]} must declare type="button"`);
     }
+    if (!/\baria-controls=["']status["']/i.test(match[0])) {
+      failures.push(`poe-source/index.html demo action button ${match[1]} must declare aria-controls="status"`);
+    }
   });
 }
 
