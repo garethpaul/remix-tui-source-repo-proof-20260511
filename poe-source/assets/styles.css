@@ -5,3 +5,7 @@
 button {
   min-height: 44px;
 }
+button:focus-visible {
+  outline: 3px solid #1f5d7a;
+  outline-offset: 3px;
+}

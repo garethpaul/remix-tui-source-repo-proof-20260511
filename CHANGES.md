@@ -2,6 +2,8 @@
 
 ## 2026-06-09
 
+- Added an explicit visible `button:focus-visible` style and validator guard
+  for proof demo keyboard focus.
 - Required the proof status live region to be atomic and refreshed the
   validator coverage plus manifest digest.
 - Added explicit non-submit types to proof demo action buttons and validator

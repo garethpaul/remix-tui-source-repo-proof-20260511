@@ -65,6 +65,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - The HTML checks also require the visible status message to keep `role="status"`
   with `aria-live="polite"` and `aria-atomic="true"`, and require proof demo
   action buttons to declare `type="button"`.
+- The CSS checks require demo buttons to keep an explicit visible
+  `button:focus-visible` outline.
 - The source proof validator also requires completed canonical plans under `docs/plans`.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
@@ -93,6 +95,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   atomic live-region guard.
 - See `docs/plans/2026-06-09-proof-button-type-guard.md` for the proof demo
   button type guard.
+- See `docs/plans/2026-06-09-proof-button-focus-visible.md` for the proof demo
+  keyboard focus guard.
 
 ## Contributing
 

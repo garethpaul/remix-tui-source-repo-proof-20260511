@@ -162,6 +162,7 @@ if (!fs.existsSync(plansRoot)) {
 }
 
 const htmlPath = path.join(sourceRoot, 'index.html');
+const cssPath = path.join(sourceRoot, 'assets', 'styles.css');
 if (!fs.existsSync(htmlPath)) {
   failures.push('poe-source/index.html is missing');
 } else {
@@ -226,6 +227,24 @@ if (!fs.existsSync(htmlPath)) {
       failures.push(`poe-source/index.html demo action button ${match[1]} must declare type="button"`);
     }
   });
+}
+
+if (!fs.existsSync(cssPath)) {
+  failures.push('poe-source/assets/styles.css is missing');
+} else {
+  const css = readText(cssPath);
+  const buttonFocusVisibleMatch = css.match(/button:focus-visible\s*\{([^}]*)\}/i);
+  if (!buttonFocusVisibleMatch) {
+    failures.push('poe-source/assets/styles.css must define a button:focus-visible rule');
+  } else {
+    const focusVisibleBody = buttonFocusVisibleMatch[1];
+    if (!/\boutline\s*:\s*(?!none\b)[^;]+;/i.test(focusVisibleBody)) {
+      failures.push('poe-source/assets/styles.css button:focus-visible must keep a visible outline');
+    }
+    if (!/\boutline-offset\s*:/i.test(focusVisibleBody)) {
+      failures.push('poe-source/assets/styles.css button:focus-visible must set outline-offset');
+    }
+  }
 }
 
 const gamePath = path.join(sourceRoot, 'game.js');
