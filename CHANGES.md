@@ -2,6 +2,8 @@
 
 ## 2026-06-09
 
+- Added explicit non-submit types to proof demo action buttons and validator
+  coverage for that markup contract.
 - Marked the proof page status message as a polite live region and added
   validator coverage for that accessibility contract.
 - Added source-root containment checks so proof manifest entries and HTML asset

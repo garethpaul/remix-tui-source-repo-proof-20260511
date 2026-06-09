@@ -212,6 +212,16 @@ if (!fs.existsSync(htmlPath)) {
   if (!linkedFiles.includes('./game.js')) {
     failures.push('poe-source/index.html must load ./game.js');
   }
+
+  const demoButtonMatches = [...html.matchAll(/<button\b(?=[^>]*\bdata-demo-action=["']([^"']+)["'])[^>]*>/gi)];
+  if (demoButtonMatches.length === 0) {
+    failures.push('poe-source/index.html must include demo action buttons');
+  }
+  demoButtonMatches.forEach((match) => {
+    if (!/\btype=["']button["']/i.test(match[0])) {
+      failures.push(`poe-source/index.html demo action button ${match[1]} must declare type="button"`);
+    }
+  });
 }
 
 const gamePath = path.join(sourceRoot, 'game.js');
