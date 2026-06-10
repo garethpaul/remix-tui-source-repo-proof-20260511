@@ -1,5 +1,9 @@
 # Changes
 
+## 2026-06-10
+
+- Guarded demo action binding against malformed document and button objects.
+
 ## 2026-06-09
 
 - Associated proof demo buttons with the status live region and added

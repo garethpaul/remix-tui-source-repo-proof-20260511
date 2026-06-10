@@ -309,6 +309,40 @@ if (!fs.existsSync(gamePath)) {
           failures.push(`GameLogic ${action} click handler must update the status live region`);
         }
       });
+      [
+        null,
+        {},
+        {
+          getElementById() {
+            throw new Error('Cannot read status element');
+          },
+          querySelectorAll() {
+            return buttons;
+          },
+        },
+        {
+          getElementById() {
+            return statusElement;
+          },
+          querySelectorAll() {
+            return null;
+          },
+        },
+        {
+          getElementById() {
+            return statusElement;
+          },
+          querySelectorAll() {
+            return [{ dataset: { demoAction: 'charge' } }];
+          },
+        },
+      ].forEach((documentRef, index) => {
+        try {
+          gameLogic.bindDemoActions(documentRef);
+        } catch (error) {
+          failures.push(`GameLogic.bindDemoActions malformed document case ${index} must not throw`);
+        }
+      });
     }
   } catch (error) {
     failures.push(`poe-source/game.js failed smoke execution: ${error.message}`);

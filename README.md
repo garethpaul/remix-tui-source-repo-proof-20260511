@@ -56,7 +56,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - The proof status message is exposed as a polite live region for assistive
   technology.
 - The proof demo buttons update the status live region through the checked-in
-  `GameLogic.bindDemoActions(document)` browser binding.
+  `GameLogic.bindDemoActions(document)` browser binding. The binding ignores
+  malformed host documents and button entries.
 
 ## Testing and Verification
 
@@ -70,7 +71,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - The CSS checks require demo buttons to keep an explicit visible
   `button:focus-visible` outline.
 - The JavaScript checks require demo action buttons to expose deterministic
-  status text and update the live region when clicked.
+  status text, update the live region when clicked, and ignore malformed
+  binding inputs.
 - The HTML checks require demo action buttons to declare that they control the
   status live region.
 - The source proof validator also requires completed canonical plans under `docs/plans`.
@@ -107,6 +109,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   button status guard.
 - See `docs/plans/2026-06-09-proof-button-status-controls.md` for the proof
   demo button `aria-controls` guard.
+- See `docs/plans/2026-06-10-proof-demo-binding-guard.md` for malformed demo
+  document binding guards.
 
 ## Contributing
 

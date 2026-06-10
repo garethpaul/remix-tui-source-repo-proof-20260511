@@ -27,6 +27,7 @@ Priority:
 - Keep proof demo button keyboard focus visibly styled
 - Keep proof demo action buttons wired to visible status updates
 - Keep proof demo action buttons associated with the status live region
+- Keep proof demo action binding defensive against malformed host documents
 - Keep completed maintenance plans under `docs/plans`
 - Avoid adding runtime dependencies without a manifest update
 
