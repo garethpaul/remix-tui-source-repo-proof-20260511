@@ -3,6 +3,10 @@
 ## 2026-06-10
 
 - Guarded demo action binding against malformed document and button objects.
+- Added pinned, least-privilege GitHub Actions validation on Node.js 20 and 24.
+- Made the Makefile validation entrypoint independent of the caller's current
+  directory.
+- Added fail-closed checks for the hosted workflow and its completed plan.
 
 ## 2026-06-09
 

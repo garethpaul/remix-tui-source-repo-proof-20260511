@@ -30,6 +30,8 @@ Helpful reports include:
   within `poe-source`; parent-directory escapes or absolute proof paths should
   be treated as suspicious.
 - No primary dependency manifest was detected in the repository root. If dependencies are added later, include a manifest and prefer reproducible installation instructions.
+- The hosted source proof check installs no project dependencies, grants only
+  read access to repository contents, and pins third-party actions by commit.
 
 
 ## Dependency and Supply Chain Security

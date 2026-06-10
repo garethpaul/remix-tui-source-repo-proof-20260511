@@ -63,6 +63,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 - Run `make check` before committing proof source changes.
 - `make check` delegates to `make verify`, which runs the dependency-free source proof smoke checks for manifest metadata, file digests, local HTML links, the self-only security policy, and the `GameLogic.runDemo()` summary.
+- GitHub Actions runs the same no-install checks on Node.js 20 and 24 using
+  immutable action revisions and read-only repository permissions.
 - The local path checks reject manifest entries or HTML asset references that
   try to escape `poe-source`.
 - The HTML checks also require the visible status message to keep `role="status"`
@@ -109,6 +111,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   button status guard.
 - See `docs/plans/2026-06-09-proof-button-status-controls.md` for the proof
   demo button `aria-controls` guard.
+- See `docs/plans/2026-06-10-hosted-proof-validation.md` for the hosted
+  validation baseline.
 - See `docs/plans/2026-06-10-proof-demo-binding-guard.md` for malformed demo
   document binding guards.
 

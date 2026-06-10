@@ -11,6 +11,8 @@ const sourceRoot = path.join(root, 'poe-source');
 const manifestPath = path.join(sourceRoot, 'PACKAGE_MANIFEST.json');
 const plansRoot = path.join(root, 'docs', 'plans');
 const canonicalPlanPath = path.join(plansRoot, '2026-06-08-remix-tui-source-proof-baseline.md');
+const hostedValidationPlanPath = path.join(plansRoot, '2026-06-10-hosted-proof-validation.md');
+const hostedValidationWorkflowPath = path.join(root, '.github', 'workflows', 'check.yml');
 const expectedSecurityPolicy = "default-src 'self'; script-src 'self'; style-src 'self'; base-uri 'none'; object-src 'none'";
 const failures = [];
 let expectedDemoSummary = 'Repo crystal rally source complete';
@@ -139,6 +141,36 @@ if (!fs.existsSync(manifestPath)) {
 
 if (!fs.existsSync(canonicalPlanPath)) {
   failures.push('docs/plans/2026-06-08-remix-tui-source-proof-baseline.md is missing');
+}
+
+if (!fs.existsSync(hostedValidationPlanPath)) {
+  failures.push('docs/plans/2026-06-10-hosted-proof-validation.md is missing');
+}
+
+if (!fs.existsSync(hostedValidationWorkflowPath)) {
+  failures.push('.github/workflows/check.yml is missing');
+} else {
+  const workflow = readText(hostedValidationWorkflowPath);
+  const requiredWorkflowFragments = [
+    'runs-on: ubuntu-24.04',
+    'permissions:',
+    'contents: read',
+    'node-version: [20, 24]',
+    'uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10',
+    'uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e',
+    'node-version: ${{ matrix.node-version }}',
+    'run: make check',
+  ];
+  requiredWorkflowFragments.forEach((fragment) => {
+    if (!workflow.includes(fragment)) {
+      failures.push(`.github/workflows/check.yml must include ${JSON.stringify(fragment)}`);
+    }
+  });
+  for (const match of workflow.matchAll(/^\s*uses:\s*([^@\s]+)@([^\s#]+)/gm)) {
+    if (!/^[a-f0-9]{40}$/.test(match[2])) {
+      failures.push(`.github/workflows/check.yml action ${match[1]} must be pinned to a full commit SHA`);
+    }
+  }
 }
 
 if (!fs.existsSync(plansRoot)) {
