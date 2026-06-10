@@ -309,6 +309,11 @@ if (!fs.existsSync(gamePath)) {
       if (gameLogic.statusForAction('unknown-action') !== expectedDemoSummary) {
         failures.push('GameLogic.statusForAction() must fall back to the documented proof summary for unknown actions');
       }
+      ['constructor', 'toString', '__proto__'].forEach((action) => {
+        if (gameLogic.statusForAction(action) !== expectedDemoSummary) {
+          failures.push(`GameLogic.statusForAction(${JSON.stringify(action)}) must ignore inherited object properties`);
+        }
+      });
     }
     if (!gameLogic || typeof gameLogic.bindDemoActions !== 'function') {
       failures.push('GameLogic.bindDemoActions(document) must wire demo buttons to the status live region');

@@ -28,6 +28,7 @@ Priority:
 - Keep proof demo action buttons wired to visible status updates
 - Keep proof demo action buttons associated with the status live region
 - Keep proof demo action binding defensive against malformed host documents
+- Keep proof demo action status lookup restricted to checked-in own properties
 - Keep completed maintenance plans under `docs/plans`
 - Keep the dependency-free proof contract running on supported Node.js lines
   in hosted validation

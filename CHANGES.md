@@ -2,6 +2,8 @@
 
 ## 2026-06-10
 
+- Restricted demo action status lookups to checked-in own properties and added
+  adversarial coverage for inherited object property names.
 - Guarded demo action binding against malformed document and button objects.
 - Added pinned, least-privilege GitHub Actions validation on Node.js 20 and 24.
 - Made the Makefile validation entrypoint independent of the caller's current

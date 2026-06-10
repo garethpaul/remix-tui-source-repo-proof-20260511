@@ -6,9 +6,10 @@
     charge: 'Player 1 crystal paddle charged',
     release: 'Player 1 released the crystal beam',
   };
+  const hasOwnProperty = Object.prototype.hasOwnProperty;
 
   function statusForAction(action) {
-    return actionStatuses[action] || demoSummary;
+    return hasOwnProperty.call(actionStatuses, action) ? actionStatuses[action] : demoSummary;
   }
 
   function runDemo() {

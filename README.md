@@ -74,7 +74,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   `button:focus-visible` outline.
 - The JavaScript checks require demo action buttons to expose deterministic
   status text, update the live region when clicked, and ignore malformed
-  binding inputs.
+  binding inputs. Unknown action names, including inherited object property
+  names, must use the documented proof summary fallback.
 - The HTML checks require demo action buttons to declare that they control the
   status live region.
 - The source proof validator also requires completed canonical plans under `docs/plans`.
@@ -115,6 +116,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   validation baseline.
 - See `docs/plans/2026-06-10-proof-demo-binding-guard.md` for malformed demo
   document binding guards.
+- See `docs/plans/2026-06-10-proof-action-own-property.md` for the demo action
+  own-property lookup guard.
 
 ## Contributing
 
