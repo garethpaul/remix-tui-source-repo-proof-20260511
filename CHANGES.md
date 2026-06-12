@@ -1,5 +1,13 @@
 # Changes
 
+## 2026-06-10
+
+- Added a GitHub Actions check workflow that runs the existing Node-backed
+  `make check` source proof baseline on pushes, pull requests, and manual
+  dispatches.
+- Added a source proof guard requiring the CI workflow and completed CI
+  baseline plan to remain checked in.
+
 ## 2026-06-09
 
 - Associated proof demo buttons with the status live region and added

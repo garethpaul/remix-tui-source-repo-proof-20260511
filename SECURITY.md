@@ -30,6 +30,8 @@ Helpful reports include:
   within `poe-source`; parent-directory escapes or absolute proof paths should
   be treated as suspicious.
 - No primary dependency manifest was detected in the repository root. If dependencies are added later, include a manifest and prefer reproducible installation instructions.
+- GitHub Actions runs the Node-backed `make check` source proof baseline before
+  review.
 
 
 ## Dependency and Supply Chain Security

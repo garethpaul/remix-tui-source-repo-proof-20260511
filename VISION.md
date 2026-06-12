@@ -28,6 +28,8 @@ Priority:
 - Keep proof demo action buttons wired to visible status updates
 - Keep proof demo action buttons associated with the status live region
 - Keep completed maintenance plans under `docs/plans`
+- Keep GitHub Actions running the Node-backed `make check` baseline before
+  review
 - Avoid adding runtime dependencies without a manifest update
 
 Next priorities:
@@ -42,6 +44,8 @@ Contribution rules:
 - Keep generated artifacts reproducible.
 - Do not mix proof updates with unrelated feature work.
 - Preserve file paths expected by the manifest.
+- Keep `.github/workflows/check.yml` aligned with the dependency-free source
+  proof validator.
 
 ## Security And Responsible Use
 

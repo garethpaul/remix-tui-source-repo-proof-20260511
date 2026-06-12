@@ -11,6 +11,8 @@ const sourceRoot = path.join(root, 'poe-source');
 const manifestPath = path.join(sourceRoot, 'PACKAGE_MANIFEST.json');
 const plansRoot = path.join(root, 'docs', 'plans');
 const canonicalPlanPath = path.join(plansRoot, '2026-06-08-remix-tui-source-proof-baseline.md');
+const ciPlanPath = path.join(plansRoot, '2026-06-10-ci-baseline.md');
+const ciWorkflowPath = path.join(root, '.github', 'workflows', 'check.yml');
 const expectedSecurityPolicy = "default-src 'self'; script-src 'self'; style-src 'self'; base-uri 'none'; object-src 'none'";
 const failures = [];
 let expectedDemoSummary = 'Repo crystal rally source complete';
@@ -140,6 +142,28 @@ if (!fs.existsSync(manifestPath)) {
 if (!fs.existsSync(canonicalPlanPath)) {
   failures.push('docs/plans/2026-06-08-remix-tui-source-proof-baseline.md is missing');
 }
+
+if (!fs.existsSync(ciPlanPath)) {
+  failures.push('docs/plans/2026-06-10-ci-baseline.md is missing');
+}
+
+if (!fs.existsSync(ciWorkflowPath)) {
+  failures.push('.github/workflows/check.yml is missing');
+} else {
+  const workflow = readText(ciWorkflowPath);
+  if (!workflow.includes('uses: actions/checkout@v4') ||
+      !workflow.includes('uses: actions/setup-node@v4') ||
+      !workflow.includes('run: make check')) {
+    failures.push('.github/workflows/check.yml must set up Node and run make check');
+  }
+}
+
+['README.md', 'VISION.md', 'SECURITY.md', 'CHANGES.md'].forEach((relativePath) => {
+  const docsPath = path.join(root, relativePath);
+  if (!fs.existsSync(docsPath) || !readText(docsPath).includes('GitHub Actions')) {
+    failures.push(`${relativePath} must document the GitHub Actions baseline`);
+  }
+});
 
 if (!fs.existsSync(plansRoot)) {
   failures.push('docs/plans must contain at least one completed plan');
