@@ -21,6 +21,8 @@ Priority:
 - Keep proof file digests aligned with checked-in source contents
 - Keep browser execution constrained to local scripts and styles
 - Keep manifest and HTML asset paths contained within `poe-source`
+- Keep proof files regular and non-symlinked under the real source root
+- Keep manifest provenance dates valid and canonical
 - Keep visible proof status text exposed as a polite live region
 - Keep proof status announcements atomic for assistive technology
 - Keep proof demo action buttons explicit non-submit controls

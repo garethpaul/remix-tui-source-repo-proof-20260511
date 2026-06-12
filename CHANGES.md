@@ -1,5 +1,12 @@
 # Changes
 
+## 2026-06-12
+
+- Added dependency-free real-path and regular-file validation for proof
+  manifest entries and HTML-linked assets.
+- Rejected file and parent-directory symlinks and required `generatedAt` to be
+  a real canonical calendar date.
+
 ## 2026-06-10
 
 - Restricted demo action status lookups to checked-in own properties and added

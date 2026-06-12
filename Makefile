@@ -7,6 +7,7 @@ lint:
 	$(NODE) "$(ROOT)/scripts/check-proof-source.js"
 
 test: lint
+	$(NODE) "$(ROOT)/scripts/test-proof-file-contract.js"
 
 build:
 	@echo "static source proof; no build step required"

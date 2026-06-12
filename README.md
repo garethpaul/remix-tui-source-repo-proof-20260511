@@ -54,7 +54,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - The proof manifest records SHA-256 digests for the HTML, JavaScript, and CSS
   proof files.
 - The proof validator keeps manifest entries and HTML asset references inside
-  `poe-source`.
+  `poe-source`, rejects symlinks and non-regular files, and requires a valid
+  calendar date in manifest provenance metadata.
 - The proof status message is exposed as a polite live region for assistive
   technology.
 - The proof demo buttons update the status live region through the checked-in
@@ -64,7 +65,7 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 ## Testing and Verification
 
 - Run `make check` before committing proof source changes.
-- `make check` delegates to `make verify`, which runs the dependency-free source proof smoke checks for manifest metadata, file digests, local HTML links, the self-only security policy, and the `GameLogic.runDemo()` summary.
+- `make check` delegates to `make verify`, which runs the dependency-free source proof smoke checks and proof-file contract tests for manifest metadata, file digests, regular non-symlink files, local HTML links, the self-only security policy, and the `GameLogic.runDemo()` summary.
 - GitHub Actions runs the same no-install checks on Node.js 20 and 24 using
   immutable action revisions, read-only repository permissions, and checkout
   credential persistence disabled on pushes, pull requests, and manual runs.
@@ -124,6 +125,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   document binding guards.
 - See `docs/plans/2026-06-10-proof-action-own-property.md` for the demo action
   own-property lookup guard.
+- See `docs/plans/2026-06-12-proof-file-metadata-integrity.md` for regular-file,
+  real-path containment, and calendar-date validation.
 
 ## Contributing
 

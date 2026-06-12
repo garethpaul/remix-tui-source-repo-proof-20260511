@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const path = require('path');
 const vm = require('vm');
 const { execFileSync } = require('child_process');
+const { isContainedRegularFile, isPathContained, isValidIsoCalendarDate } = require('./proof-file-contract');
 
 const root = path.resolve(__dirname, '..');
 const sourceRoot = path.join(root, 'poe-source');
@@ -36,8 +37,7 @@ function sourcePathFor(reference) {
 }
 
 function staysWithinSourceRoot(filePath) {
-  const relativePath = path.relative(sourceRoot, filePath);
-  return relativePath === '' || (!relativePath.startsWith('..') && !path.isAbsolute(relativePath));
+  return isPathContained(sourceRoot, filePath);
 }
 
 function walkFiles(dir) {
@@ -50,8 +50,8 @@ function walkFiles(dir) {
   });
 }
 
-if (!fs.existsSync(manifestPath)) {
-  failures.push('poe-source/PACKAGE_MANIFEST.json is missing');
+if (!isContainedRegularFile(sourceRoot, manifestPath)) {
+  failures.push('poe-source/PACKAGE_MANIFEST.json must be a contained regular file');
 } else {
   let manifest;
   try {
@@ -72,8 +72,8 @@ if (!fs.existsSync(manifestPath)) {
       }
     });
 
-    if (typeof manifest.generatedAt !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(manifest.generatedAt)) {
-      failures.push('poe-source/PACKAGE_MANIFEST.json must include generatedAt as YYYY-MM-DD');
+    if (!isValidIsoCalendarDate(manifest.generatedAt)) {
+      failures.push('poe-source/PACKAGE_MANIFEST.json must include generatedAt as a valid YYYY-MM-DD calendar date');
     }
 
     if (typeof manifest.expectedDemoSummary !== 'string' || manifest.expectedDemoSummary.trim() === '') {
@@ -97,8 +97,8 @@ if (!fs.existsSync(manifestPath)) {
         failures.push(`manifest file ${file} must stay within poe-source`);
         return;
       }
-      if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
-        failures.push(`manifest lists missing file ${file}`);
+      if (!isContainedRegularFile(sourceRoot, filePath)) {
+        failures.push(`manifest file ${file} must be a contained regular file without symlinks`);
       }
     });
 
@@ -116,8 +116,7 @@ if (!fs.existsSync(manifestPath)) {
         }
         if (
           staysWithinSourceRoot(filePath) &&
-          fs.existsSync(filePath) &&
-          fs.statSync(filePath).isFile() &&
+          isContainedRegularFile(sourceRoot, filePath) &&
           sha256Hex(filePath) !== expectedDigest
         ) {
           failures.push(`manifest digest for ${file} does not match checked-in file contents`);
@@ -278,8 +277,8 @@ if (!fs.existsSync(plansRoot)) {
 
 const htmlPath = path.join(sourceRoot, 'index.html');
 const cssPath = path.join(sourceRoot, 'assets', 'styles.css');
-if (!fs.existsSync(htmlPath)) {
-  failures.push('poe-source/index.html is missing');
+if (!isContainedRegularFile(sourceRoot, htmlPath)) {
+  failures.push('poe-source/index.html must be a contained regular file without symlinks');
 } else {
   const html = readText(htmlPath);
   if (!/^<!doctype html>/i.test(html.trim())) {
@@ -325,8 +324,8 @@ if (!fs.existsSync(htmlPath)) {
       failures.push(`poe-source/index.html local asset ${reference} must stay within poe-source`);
       continue;
     }
-    if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
-      failures.push(`poe-source/index.html references missing asset ${reference}`);
+    if (!isContainedRegularFile(sourceRoot, filePath)) {
+      failures.push(`poe-source/index.html asset ${reference} must be a contained regular file without symlinks`);
     }
   }
   if (!linkedFiles.includes('./game.js')) {
@@ -347,8 +346,8 @@ if (!fs.existsSync(htmlPath)) {
   });
 }
 
-if (!fs.existsSync(cssPath)) {
-  failures.push('poe-source/assets/styles.css is missing');
+if (!isContainedRegularFile(sourceRoot, cssPath)) {
+  failures.push('poe-source/assets/styles.css must be a contained regular file without symlinks');
 } else {
   const css = readText(cssPath);
   const buttonFocusVisibleMatch = css.match(/button:focus-visible\s*\{([^}]*)\}/i);
@@ -366,8 +365,8 @@ if (!fs.existsSync(cssPath)) {
 }
 
 const gamePath = path.join(sourceRoot, 'game.js');
-if (!fs.existsSync(gamePath)) {
-  failures.push('poe-source/game.js is missing');
+if (!isContainedRegularFile(sourceRoot, gamePath)) {
+  failures.push('poe-source/game.js must be a contained regular file without symlinks');
 } else {
   const sandbox = { globalThis: {} };
   try {

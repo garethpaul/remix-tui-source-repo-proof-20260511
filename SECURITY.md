@@ -29,6 +29,8 @@ Helpful reports include:
 - Proof manifest entries and HTML asset references should remain contained
   within `poe-source`; parent-directory escapes or absolute proof paths should
   be treated as suspicious.
+- Proof source paths must resolve to regular non-symlink files within the real
+  source root so lexical containment cannot be bypassed through links.
 - No primary dependency manifest was detected in the repository root. If dependencies are added later, include a manifest and prefer reproducible installation instructions.
 - The proof baseline fails closed if it cannot inspect tracked local secret and
   editor metadata paths, and rejects those files when tracked.
