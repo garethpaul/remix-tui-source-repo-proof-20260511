@@ -38,6 +38,9 @@ Helpful reports include:
   grants only read access to repository contents, and pins third-party actions
   by commit. Checkout credential persistence is disabled, and the workflow
   never receives repository secrets.
+- The hosted gate requires a real-browser Chrome smoke that serves only on
+  loopback, clicks both proof controls, and compares desktop/mobile screenshots
+  against blank pages without contacting external origins.
 - Demo action status lookups accept only checked-in own properties; inherited
   object property names must fall back to the documented proof summary.
 

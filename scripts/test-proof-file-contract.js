@@ -59,9 +59,11 @@ try {
 
   const checkerSource = fs.readFileSync(path.join(__dirname, 'check-proof-source.js'), 'utf8');
   const makefile = fs.readFileSync(path.join(__dirname, '..', 'Makefile'), 'utf8');
-  assert.strictEqual((checkerSource.match(/isContainedRegularFile\(/g) || []).length, 7);
+  assert.strictEqual((checkerSource.match(/isContainedRegularFile\(/g) || []).length, 8);
   assert.strictEqual((checkerSource.match(/isValidIsoCalendarDate\(/g) || []).length, 1);
   assert.ok(makefile.includes('scripts/test-proof-file-contract.js'));
+  assert.ok(makefile.includes('scripts/test-browser-smoke.js'));
+  assert.ok(makefile.includes('scripts/smoke-browser.js'));
 } finally {
   fs.rmSync(tempRoot, { recursive: true, force: true });
 }

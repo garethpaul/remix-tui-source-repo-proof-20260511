@@ -2,6 +2,8 @@
 
 ## 2026-06-12
 
+- Added a dependency-free real-browser Chrome smoke for both proof actions and
+  nonblank desktop/mobile screenshots.
 - Added dependency-free real-path and regular-file validation for proof
   manifest entries and HTML-linked assets.
 - Rejected file and parent-directory symlinks and required `generatedAt` to be

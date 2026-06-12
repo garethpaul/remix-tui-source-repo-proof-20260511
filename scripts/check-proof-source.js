@@ -16,6 +16,8 @@ const canonicalPlanPath = path.join(plansRoot, '2026-06-08-remix-tui-source-proo
 const ciPlanPath = path.join(plansRoot, '2026-06-10-ci-baseline.md');
 const hostedValidationPlanPath = path.join(plansRoot, '2026-06-10-hosted-proof-validation.md');
 const hostedValidationWorkflowPath = path.join(root, '.github', 'workflows', 'check.yml');
+const browserSmokePath = path.join(root, 'scripts', 'smoke-browser.js');
+const browserSmokeTestPath = path.join(root, 'scripts', 'test-browser-smoke.js');
 const expectedSecurityPolicy = "default-src 'self'; script-src 'self'; style-src 'self'; base-uri 'none'; object-src 'none'";
 const failures = [];
 let expectedDemoSummary = 'Repo crystal rally source complete';
@@ -191,8 +193,11 @@ if (!fs.existsSync(hostedValidationWorkflowPath)) {
     '        with:',
     '          node-version: ${{ matrix.node-version }}',
     '',
+    '      - name: Require hosted Chrome',
+    '        run: google-chrome --version',
+    '',
     '      - name: Validate proof source',
-    '        run: make check',
+    '        run: CHROME_BIN=google-chrome make check',
     '',
   ].join('\n');
   if (workflow !== expectedWorkflow) {
@@ -200,10 +205,33 @@ if (!fs.existsSync(hostedValidationWorkflowPath)) {
   }
 }
 
+for (const browserPath of [browserSmokePath, browserSmokeTestPath]) {
+  if (!isContainedRegularFile(root, browserPath)) {
+    failures.push(`${rel(browserPath)} must be a contained regular file without symlinks`);
+  }
+}
+
+const makefilePath = path.join(root, 'Makefile');
+if (!fs.existsSync(makefilePath)) {
+  failures.push('Makefile is missing');
+} else {
+  const makefile = readText(makefilePath);
+  ['scripts/smoke-browser.js', 'scripts/test-browser-smoke.js', '$(MAKE) browser'].forEach((fragment) => {
+    if (!makefile.includes(fragment)) failures.push(`Makefile must preserve real-browser proof command: ${fragment}`);
+  });
+}
+
 ['README.md', 'VISION.md', 'SECURITY.md', 'CHANGES.md'].forEach((relativePath) => {
   const docsPath = path.join(root, relativePath);
   if (!fs.existsSync(docsPath) || !readText(docsPath).includes('GitHub Actions')) {
     failures.push(`${relativePath} must document the GitHub Actions baseline`);
+  }
+});
+
+['README.md', 'VISION.md', 'SECURITY.md', 'CHANGES.md'].forEach((relativePath) => {
+  const docsPath = path.join(root, relativePath);
+  if (!fs.existsSync(docsPath) || !readText(docsPath).toLowerCase().includes('real-browser')) {
+    failures.push(`${relativePath} must document the real-browser proof smoke`);
   }
 });
 

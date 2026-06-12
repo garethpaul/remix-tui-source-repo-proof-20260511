@@ -32,5 +32,8 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
+      - name: Require hosted Chrome
+        run: google-chrome --version
+
       - name: Validate proof source
-        run: make check
+        run: CHROME_BIN=google-chrome make check

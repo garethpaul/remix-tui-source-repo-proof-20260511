@@ -65,10 +65,16 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 ## Testing and Verification
 
 - Run `make check` before committing proof source changes.
-- `make check` delegates to `make verify`, which runs the dependency-free source proof smoke checks and proof-file contract tests for manifest metadata, file digests, regular non-symlink files, local HTML links, the self-only security policy, and the `GameLogic.runDemo()` summary.
-- GitHub Actions runs the same no-install checks on Node.js 20 and 24 using
-  immutable action revisions, read-only repository permissions, and checkout
-  credential persistence disabled on pushes, pull requests, and manual runs.
+- `make check` delegates to `make verify`, which runs the dependency-free source
+  proof checks and proof-file contract tests for manifest metadata, file
+  digests, regular non-symlink files, local HTML links, the self-only security
+  policy, and the `GameLogic.runDemo()` summary. When Chrome is available it
+  also runs a real-browser smoke for both controls and desktop/mobile
+  screenshots.
+- GitHub Actions requires Chrome and runs the same no-install checks plus the
+  real-browser smoke on Node.js 20 and 24 using immutable action revisions,
+  read-only repository permissions, and checkout credential persistence
+  disabled on pushes, pull requests, and manual runs.
 - The local path checks reject manifest entries or HTML asset references that
   try to escape `poe-source`.
 - The HTML checks also require the visible status message to keep `role="status"`
@@ -127,6 +133,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   own-property lookup guard.
 - See `docs/plans/2026-06-12-proof-file-metadata-integrity.md` for regular-file,
   real-path containment, and calendar-date validation.
+- See `docs/plans/2026-06-12-real-browser-proof-smoke.md` for Chrome interaction
+  and desktop/mobile screenshot validation.
 
 ## Contributing
 

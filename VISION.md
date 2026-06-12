@@ -34,6 +34,7 @@ Priority:
 - Keep completed maintenance plans under `docs/plans`
 - Keep the dependency-free proof contract running on supported Node.js lines
   in credential-free GitHub Actions validation
+- Keep a dependency-free real-browser interaction and screenshot smoke
 - Keep local secrets and editor metadata out of the checked-in proof artifact
 - Avoid adding runtime dependencies without a manifest update
 
