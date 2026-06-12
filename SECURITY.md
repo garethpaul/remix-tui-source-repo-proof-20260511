@@ -30,8 +30,14 @@ Helpful reports include:
   within `poe-source`; parent-directory escapes or absolute proof paths should
   be treated as suspicious.
 - No primary dependency manifest was detected in the repository root. If dependencies are added later, include a manifest and prefer reproducible installation instructions.
-- GitHub Actions runs the Node-backed `make check` source proof baseline before
-  review.
+- The proof baseline fails closed if it cannot inspect tracked local secret and
+  editor metadata paths, and rejects those files when tracked.
+- The GitHub Actions source proof check installs no project dependencies,
+  grants only read access to repository contents, and pins third-party actions
+  by commit. Checkout credential persistence is disabled, and the workflow
+  never receives repository secrets.
+- Demo action status lookups accept only checked-in own properties; inherited
+  object property names must fall back to the documented proof summary.
 
 
 ## Dependency and Supply Chain Security

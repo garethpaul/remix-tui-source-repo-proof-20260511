@@ -6,9 +6,10 @@
     charge: 'Player 1 crystal paddle charged',
     release: 'Player 1 released the crystal beam',
   };
+  const hasOwnProperty = Object.prototype.hasOwnProperty;
 
   function statusForAction(action) {
-    return actionStatuses[action] || demoSummary;
+    return hasOwnProperty.call(actionStatuses, action) ? actionStatuses[action] : demoSummary;
   }
 
   function runDemo() {
@@ -16,14 +17,39 @@
   }
 
   function bindDemoActions(documentRef) {
-    const statusElement = documentRef.getElementById('status');
-    if (!statusElement) {
+    if (
+      !documentRef ||
+      typeof documentRef.getElementById !== 'function' ||
+      typeof documentRef.querySelectorAll !== 'function'
+    ) {
       return;
     }
 
-    documentRef.querySelectorAll('[data-demo-action]').forEach((button) => {
+    let statusElement;
+    let buttons;
+    try {
+      statusElement = documentRef.getElementById('status');
+      buttons = documentRef.querySelectorAll('[data-demo-action]');
+    } catch (error) {
+      return;
+    }
+
+    if (!statusElement || !buttons || typeof buttons.forEach !== 'function') {
+      return;
+    }
+
+    buttons.forEach((button) => {
+      if (!button || typeof button.addEventListener !== 'function') {
+        return;
+      }
       button.addEventListener('click', () => {
-        statusElement.textContent = statusForAction(button.dataset.demoAction);
+        let action;
+        try {
+          action = button.dataset && button.dataset.demoAction;
+        } catch (error) {
+          action = undefined;
+        }
+        statusElement.textContent = statusForAction(action);
       });
     });
   }

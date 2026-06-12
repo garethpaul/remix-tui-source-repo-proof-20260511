@@ -42,6 +42,7 @@
 ## Safety and gotchas
 
 - No required secret or credential file was identified in the repository scan. If you add integrations later, keep secrets out of git.
+- Keep hosted proof validation dependency-free and credential-free; do not add repository secrets or persisted checkout credentials.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `VISION.md` for project direction and contribution guardrails.
 - See `docs/plans/2026-06-08-remix-tui-source-proof-baseline.md` for the canonical static proof validation baseline.

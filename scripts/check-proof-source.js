@@ -5,6 +5,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const path = require('path');
 const vm = require('vm');
+const { execFileSync } = require('child_process');
 
 const root = path.resolve(__dirname, '..');
 const sourceRoot = path.join(root, 'poe-source');
@@ -12,7 +13,8 @@ const manifestPath = path.join(sourceRoot, 'PACKAGE_MANIFEST.json');
 const plansRoot = path.join(root, 'docs', 'plans');
 const canonicalPlanPath = path.join(plansRoot, '2026-06-08-remix-tui-source-proof-baseline.md');
 const ciPlanPath = path.join(plansRoot, '2026-06-10-ci-baseline.md');
-const ciWorkflowPath = path.join(root, '.github', 'workflows', 'check.yml');
+const hostedValidationPlanPath = path.join(plansRoot, '2026-06-10-hosted-proof-validation.md');
+const hostedValidationWorkflowPath = path.join(root, '.github', 'workflows', 'check.yml');
 const expectedSecurityPolicy = "default-src 'self'; script-src 'self'; style-src 'self'; base-uri 'none'; object-src 'none'";
 const failures = [];
 let expectedDemoSummary = 'Repo crystal rally source complete';
@@ -147,14 +149,55 @@ if (!fs.existsSync(ciPlanPath)) {
   failures.push('docs/plans/2026-06-10-ci-baseline.md is missing');
 }
 
-if (!fs.existsSync(ciWorkflowPath)) {
+if (!fs.existsSync(hostedValidationPlanPath)) {
+  failures.push('docs/plans/2026-06-10-hosted-proof-validation.md is missing');
+}
+
+if (!fs.existsSync(hostedValidationWorkflowPath)) {
   failures.push('.github/workflows/check.yml is missing');
 } else {
-  const workflow = readText(ciWorkflowPath);
-  if (!workflow.includes('uses: actions/checkout@v4') ||
-      !workflow.includes('uses: actions/setup-node@v4') ||
-      !workflow.includes('run: make check')) {
-    failures.push('.github/workflows/check.yml must set up Node and run make check');
+  const workflow = readText(hostedValidationWorkflowPath);
+  const expectedWorkflow = [
+    'name: Check',
+    '',
+    'on:',
+    '  push:',
+    '  pull_request:',
+    '  workflow_dispatch:',
+    '',
+    'permissions:',
+    '  contents: read',
+    '',
+    'concurrency:',
+    '  group: check-${{ github.workflow }}-${{ github.ref }}',
+    '  cancel-in-progress: true',
+    '',
+    'jobs:',
+    '  proof:',
+    '    name: Node ${{ matrix.node-version }}',
+    '    runs-on: ubuntu-24.04',
+    '    timeout-minutes: 5',
+    '    strategy:',
+    '      fail-fast: false',
+    '      matrix:',
+    '        node-version: [20, 24]',
+    '    steps:',
+    '      - name: Check out repository',
+    '        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3',
+    '        with:',
+    '          persist-credentials: false',
+    '',
+    '      - name: Set up Node.js',
+    '        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0',
+    '        with:',
+    '          node-version: ${{ matrix.node-version }}',
+    '',
+    '      - name: Validate proof source',
+    '        run: make check',
+    '',
+  ].join('\n');
+  if (workflow !== expectedWorkflow) {
+    failures.push('.github/workflows/check.yml must match the reviewed credential-free contract');
   }
 }
 
@@ -164,6 +207,52 @@ if (!fs.existsSync(ciWorkflowPath)) {
     failures.push(`${relativePath} must document the GitHub Actions baseline`);
   }
 });
+
+['make check', 'poe-source', 'secrets'].forEach((guidance) => {
+  const agentsPath = path.join(root, 'AGENTS.md');
+  if (!fs.existsSync(agentsPath) || !readText(agentsPath).includes(guidance)) {
+    failures.push(`AGENTS.md must preserve contributor guidance: ${guidance}`);
+  }
+});
+
+const gitignorePath = path.join(root, '.gitignore');
+const requiredIgnoreEntries = [
+  '.env',
+  '.env.*',
+  '!.env.example',
+  '.DS_Store',
+  '.idea/',
+  '.vscode/',
+  '*.iml',
+  'node_modules/',
+  'dist/',
+];
+if (!fs.existsSync(gitignorePath)) {
+  failures.push('.gitignore is missing');
+} else {
+  const ignoredEntries = new Set(readText(gitignorePath).split(/\r?\n/));
+  requiredIgnoreEntries.forEach((entry) => {
+    if (!ignoredEntries.has(entry)) {
+      failures.push(`.gitignore must include ${JSON.stringify(entry)}`);
+    }
+  });
+}
+
+try {
+  const trackedLocalMetadata = execFileSync(
+    'git',
+    ['ls-files', '.env', '.env.*', '.idea/**', '.vscode/**', '*.iml'],
+    { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
+  )
+    .split(/\r?\n/)
+    .filter((entry) => entry && entry !== '.env.example')
+    .join('\n');
+  if (trackedLocalMetadata) {
+    failures.push(`local secrets or editor metadata must not be tracked: ${trackedLocalMetadata}`);
+  }
+} catch (error) {
+  failures.push('proof validation must be able to inspect tracked secret and editor metadata paths');
+}
 
 if (!fs.existsSync(plansRoot)) {
   failures.push('docs/plans must contain at least one completed plan');
@@ -179,7 +268,9 @@ if (!fs.existsSync(plansRoot)) {
 
   docsPlans.forEach((planPath) => {
     const plan = readText(planPath);
-    if (!plan.includes('Status: Completed') || !plan.includes('make check')) {
+    const statusLines = plan.split(/\r?\n/).filter((line) => /^(?:## )?Status:/.test(line));
+    const completedStatus = statusLines.filter((line) => line === 'Status: Completed' || line === '## Status: Completed');
+    if (statusLines.length !== 1 || completedStatus.length !== 1 || !plan.includes('make check')) {
       failures.push(`${rel(planPath)} must record completed status and make check verification`);
     }
   });
@@ -301,6 +392,11 @@ if (!fs.existsSync(gamePath)) {
       if (gameLogic.statusForAction('unknown-action') !== expectedDemoSummary) {
         failures.push('GameLogic.statusForAction() must fall back to the documented proof summary for unknown actions');
       }
+      ['constructor', 'toString', '__proto__'].forEach((action) => {
+        if (gameLogic.statusForAction(action) !== expectedDemoSummary) {
+          failures.push(`GameLogic.statusForAction(${JSON.stringify(action)}) must ignore inherited object properties`);
+        }
+      });
     }
     if (!gameLogic || typeof gameLogic.bindDemoActions !== 'function') {
       failures.push('GameLogic.bindDemoActions(document) must wire demo buttons to the status live region');
@@ -331,6 +427,40 @@ if (!fs.existsSync(gamePath)) {
         const expectedStatus = gameLogic.statusForAction(action);
         if (statusElement.textContent !== expectedStatus) {
           failures.push(`GameLogic ${action} click handler must update the status live region`);
+        }
+      });
+      [
+        null,
+        {},
+        {
+          getElementById() {
+            throw new Error('Cannot read status element');
+          },
+          querySelectorAll() {
+            return buttons;
+          },
+        },
+        {
+          getElementById() {
+            return statusElement;
+          },
+          querySelectorAll() {
+            return null;
+          },
+        },
+        {
+          getElementById() {
+            return statusElement;
+          },
+          querySelectorAll() {
+            return [{ dataset: { demoAction: 'charge' } }];
+          },
+        },
+      ].forEach((documentRef, index) => {
+        try {
+          gameLogic.bindDemoActions(documentRef);
+        } catch (error) {
+          failures.push(`GameLogic.bindDemoActions malformed document case ${index} must not throw`);
         }
       });
     }

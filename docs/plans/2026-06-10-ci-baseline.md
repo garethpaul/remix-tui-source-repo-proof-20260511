@@ -12,16 +12,20 @@ contracts are checked before review.
 ## Objectives
 
 - Run the existing `make check` wrapper in GitHub Actions.
-- Keep the hosted job dependency-free beyond a pinned Node runtime.
+- Keep the hosted jobs dependency-free across the Node.js 20 and 24 release
+  lines.
 - Make the workflow presence part of the source proof baseline contract.
 
 ## Work Completed
 
 - Added `.github/workflows/check.yml` to run `make check` on pushes, pull
   requests, and manual dispatches.
-- Set up Node 20 for the dependency-free proof validator.
-- Extended `scripts/check-proof-source.js` to require the CI workflow and this
-  completed plan.
+- Pinned checkout and Node setup actions, granted only read access, disabled
+  persisted checkout credentials, and used a fixed Ubuntu runner.
+- Extended `scripts/check-proof-source.js` to require the exact CI workflow,
+  this completed plan, and the hosted-validation plan.
+- Added local secret/editor exclusions and fail-closed tracked-metadata
+  inspection to the canonical proof baseline.
 - Updated README, VISION, SECURITY, and CHANGES with the CI baseline.
 
 ## Verification

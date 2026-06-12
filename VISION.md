@@ -27,9 +27,12 @@ Priority:
 - Keep proof demo button keyboard focus visibly styled
 - Keep proof demo action buttons wired to visible status updates
 - Keep proof demo action buttons associated with the status live region
+- Keep proof demo action binding defensive against malformed host documents
+- Keep proof demo action status lookup restricted to checked-in own properties
 - Keep completed maintenance plans under `docs/plans`
-- Keep GitHub Actions running the Node-backed `make check` baseline before
-  review
+- Keep the dependency-free proof contract running on supported Node.js lines
+  in credential-free GitHub Actions validation
+- Keep local secrets and editor metadata out of the checked-in proof artifact
 - Avoid adding runtime dependencies without a manifest update
 
 Next priorities:

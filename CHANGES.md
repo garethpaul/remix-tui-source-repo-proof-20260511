@@ -2,11 +2,16 @@
 
 ## 2026-06-10
 
-- Added a GitHub Actions check workflow that runs the existing Node-backed
-  `make check` source proof baseline on pushes, pull requests, and manual
-  dispatches.
-- Added a source proof guard requiring the CI workflow and completed CI
-  baseline plan to remain checked in.
+- Restricted demo action status lookups to checked-in own properties and added
+  adversarial coverage for inherited object property names.
+- Guarded demo action binding against malformed document and button objects.
+- Added pinned, credential-free, least-privilege GitHub Actions validation on
+  Node.js 20 and 24 for pushes, pull requests, and manual dispatches.
+- Made the Makefile validation entrypoint independent of the caller's current
+  directory.
+- Added fail-closed exact checks for the hosted workflow and both completed CI
+  plans.
+- Added local secret/editor exclusions and fail-closed tracked-metadata checks.
 
 ## 2026-06-09
 

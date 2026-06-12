@@ -13,6 +13,8 @@ This README is based on the checked-in source, manifests, scripts, and repositor
 
 - `README.md` - project overview and local usage notes
 - `CHANGES.md` - maintenance history for repository checks and source proof updates
+- `.github/workflows/check.yml` - hosted dependency-free proof validation
+- `.gitignore` - local secret, editor, dependency, and build-output exclusions
 - `Makefile` - local verification entry points
 - `docs/plans` - completed maintenance plans for the current baseline
 - `plans` - historical implementation notes
@@ -56,14 +58,16 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - The proof status message is exposed as a polite live region for assistive
   technology.
 - The proof demo buttons update the status live region through the checked-in
-  `GameLogic.bindDemoActions(document)` browser binding.
+  `GameLogic.bindDemoActions(document)` browser binding. The binding ignores
+  malformed host documents and button entries.
 
 ## Testing and Verification
 
 - Run `make check` before committing proof source changes.
 - `make check` delegates to `make verify`, which runs the dependency-free source proof smoke checks for manifest metadata, file digests, local HTML links, the self-only security policy, and the `GameLogic.runDemo()` summary.
-- GitHub Actions runs `make check` through `.github/workflows/check.yml` on
-  pushes, pull requests, and manual dispatches.
+- GitHub Actions runs the same no-install checks on Node.js 20 and 24 using
+  immutable action revisions, read-only repository permissions, and checkout
+  credential persistence disabled on pushes, pull requests, and manual runs.
 - The local path checks reject manifest entries or HTML asset references that
   try to escape `poe-source`.
 - The HTML checks also require the visible status message to keep `role="status"`
@@ -72,7 +76,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - The CSS checks require demo buttons to keep an explicit visible
   `button:focus-visible` outline.
 - The JavaScript checks require demo action buttons to expose deterministic
-  status text and update the live region when clicked.
+  status text, update the live region when clicked, and ignore malformed
+  binding inputs. Unknown action names, including inherited object property
+  names, must use the documented proof summary fallback.
 - The HTML checks require demo action buttons to declare that they control the
   status live region.
 - The source proof validator also requires completed canonical plans under `docs/plans`.
@@ -82,6 +88,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 ## Configuration and Secrets
 
 - No required secret or credential file was identified in the repository scan. If you add integrations later, keep secrets out of git.
+- The source proof rejects tracked `.env` files and common editor metadata;
+  keep local configuration outside version control.
 
 ## Security and Privacy Notes
 
@@ -110,6 +118,12 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - See `docs/plans/2026-06-09-proof-button-status-controls.md` for the proof
   demo button `aria-controls` guard.
 - See `docs/plans/2026-06-10-ci-baseline.md` for the GitHub Actions baseline.
+- See `docs/plans/2026-06-10-hosted-proof-validation.md` for the hosted
+  validation baseline.
+- See `docs/plans/2026-06-10-proof-demo-binding-guard.md` for malformed demo
+  document binding guards.
+- See `docs/plans/2026-06-10-proof-action-own-property.md` for the demo action
+  own-property lookup guard.
 
 ## Contributing
 
