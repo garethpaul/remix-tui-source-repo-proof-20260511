@@ -1,6 +1,6 @@
 # Screenshot Baseline Integrity
 
-## Status: Pending
+## Status: Completed
 
 ## Context
 
@@ -8,11 +8,11 @@ The Chrome smoke validates each proof screenshot as an exact-size PNG, then
 compares its digest with a blank-page screenshot. The blank comparison file is
 read and hashed without validating its PNG structure or dimensions, so an
 invalid or mismatched baseline could make the nonblank assertion pass without
-a valid like-for-like reference.
+a structurally recognized, like-for-like reference.
 
 ## Requirements
 
-- **R1:** Reject malformed proof and blank screenshot PNG data.
+- **R1:** Reject malformed proof and blank screenshot PNG/IHDR headers.
 - **R2:** Require both screenshots to match the declared viewport dimensions.
 - **R3:** Preserve the exact digest inequality check after both inputs pass
   structural validation.
@@ -26,7 +26,7 @@ a valid like-for-like reference.
 ### U1. Screenshot Pair Contract
 
 Extract the screenshot-pair validation in `scripts/smoke-browser.js` so both
-proof and blank images pass the existing PNG-header and exact-dimension checks
+proof and blank images pass the existing PNG/IHDR and exact-dimension checks
 before their digests are compared.
 
 ### U2. Contract Tests
@@ -59,9 +59,29 @@ and repository integrity scans before marking this plan completed.
 
 ## Work Completed
 
-Pending implementation.
+- Added one screenshot-pair contract that validates the proof and blank image
+  with the existing PNG/IHDR parser and exact viewport dimensions before
+  comparing SHA-256 digests.
+- Routed production screenshot verification through the shared contract.
+- Added focused malformed blank, wrong-size blank, identical-image, valid-pair,
+  and production-wiring coverage.
+- Synchronized the source checker and repository maintenance documentation.
 
 ## Verification Results
 
-Pending implementation and validation; `make check` evidence will be recorded
-before completion.
+- Node syntax checks and `node scripts/test-browser-smoke.js` passed.
+- `CHROME_BIN=google-chrome node scripts/smoke-browser.js` passed both actions,
+  responsive layout checks, and desktop/mobile screenshot pairs.
+- `CHROME_BIN=google-chrome make check` passed the Git-aware source checks,
+  proof-file contracts, browser contracts, real Chrome smoke, and no-build gate.
+- The external-directory `make check` passed with the same real Chrome
+  coverage, preserving the rooted Makefile entrypoint.
+- The hostile gate rejected all eight hostile mutations covering omitted blank
+  validation, dimension and PNG bypasses, inverted digest comparison, removed
+  production/export/Make wiring, and incomplete plan status.
+- The changed browser modules and focused contract tests passed in
+  network-isolated, read-only Node 20.20.2 and Node 24.16.0 containers. Those
+  minimal images do not contain Make or Git, so a full container `make check`
+  is not claimed; the host full gate remains authoritative.
+- Workflow YAML parsing, protected-file comparison, secret and generated-file
+  screening, and `git diff --check` are recorded before the shipping commit.

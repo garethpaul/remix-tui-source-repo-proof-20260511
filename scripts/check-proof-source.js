@@ -20,6 +20,7 @@ const browserSmokePath = path.join(root, 'scripts', 'smoke-browser.js');
 const browserSmokeTestPath = path.join(root, 'scripts', 'test-browser-smoke.js');
 const browserIsolationPlanPath = path.join(plansRoot, '2026-06-13-browser-smoke-process-isolation.md');
 const responsiveLayoutPlanPath = path.join(plansRoot, '2026-06-13-responsive-browser-layout.md');
+const screenshotBaselinePlanPath = path.join(plansRoot, '2026-06-13-screenshot-baseline-integrity.md');
 const expectedSecurityPolicy = "default-src 'self'; script-src 'self'; style-src 'self'; base-uri 'none'; object-src 'none'";
 const failures = [];
 let expectedDemoSummary = 'Repo crystal rally source complete';
@@ -221,6 +222,23 @@ if (!fs.existsSync(responsiveLayoutPlanPath)) {
   failures.push('docs/plans/2026-06-13-responsive-browser-layout.md is missing');
 }
 
+if (!fs.existsSync(screenshotBaselinePlanPath)) {
+  failures.push('docs/plans/2026-06-13-screenshot-baseline-integrity.md is missing');
+} else {
+  const screenshotBaselinePlan = readText(screenshotBaselinePlanPath);
+  [
+    '`CHROME_BIN=google-chrome make check` passed',
+    'external-directory `make check` passed',
+    'rejected all eight hostile mutations',
+    'Node 20.20.2 and Node 24.16.0',
+    'do not contain Make or Git',
+  ].forEach((evidence) => {
+    if (!screenshotBaselinePlan.includes(evidence)) {
+      failures.push(`screenshot baseline plan must record verification evidence: ${evidence}`);
+    }
+  });
+}
+
 if (fs.existsSync(browserSmokePath)) {
   const browserSmoke = readText(browserSmokePath);
   [
@@ -237,6 +255,26 @@ if (fs.existsSync(browserSmokeTestPath)) {
   const browserSmokeTest = readText(browserSmokeTestPath);
   ['chromeProfilePath', "'chrome-profile-0'", 'assert.notStrictEqual'].forEach((fragment) => {
     if (!browserSmokeTest.includes(fragment)) failures.push(`browser smoke tests must preserve process isolation: ${fragment}`);
+  });
+}
+
+if (fs.existsSync(browserSmokePath)) {
+  const browserSmoke = readText(browserSmokePath);
+  [
+    'function assertScreenshotPair(name, screenshot, blank, expectedViewport)',
+    "for (const [kind, contents] of [['proof', screenshot], ['blank', blank]])",
+    'const dimensions = parsePngDimensions(contents);',
+    'assertScreenshotPair(name, screenshot, blank, viewport);',
+    'screenshotDigest === blankDigest',
+  ].forEach((fragment) => {
+    if (!browserSmoke.includes(fragment)) failures.push(`browser smoke must preserve screenshot baseline integrity: ${fragment}`);
+  });
+}
+
+if (fs.existsSync(browserSmokeTestPath)) {
+  const browserSmokeTest = readText(browserSmokeTestPath);
+  ['assertScreenshotPair', 'blank screenshot dimensions', 'matches a blank page', 'Buffer.alloc(24)'].forEach((fragment) => {
+    if (!browserSmokeTest.includes(fragment)) failures.push(`browser smoke tests must preserve screenshot baseline mutation: ${fragment}`);
   });
 }
 

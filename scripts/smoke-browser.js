@@ -204,6 +204,22 @@ function parsePngDimensions(contents) {
   return { width: contents.readUInt32BE(16), height: contents.readUInt32BE(20) };
 }
 
+function assertScreenshotPair(name, screenshot, blank, expectedViewport) {
+  for (const [kind, contents] of [['proof', screenshot], ['blank', blank]]) {
+    const dimensions = parsePngDimensions(contents);
+    if (dimensions.width !== expectedViewport.width || dimensions.height !== expectedViewport.height) {
+      throw new Error(
+        `${name} ${kind} screenshot dimensions are ${dimensions.width}x${dimensions.height}, ` +
+        `expected ${expectedViewport.width}x${expectedViewport.height}`,
+      );
+    }
+  }
+
+  const screenshotDigest = crypto.createHash('sha256').update(screenshot).digest('hex');
+  const blankDigest = crypto.createHash('sha256').update(blank).digest('hex');
+  if (screenshotDigest === blankDigest) throw new Error(`${name} screenshot matches a blank page`);
+}
+
 function assertVisibleInsideViewport(name, geometry, viewport) {
   const numericFields = ['left', 'top', 'right', 'bottom', 'width', 'height'];
   if (!geometry || numericFields.some((field) => !Number.isFinite(geometry[field]))) {
@@ -305,13 +321,7 @@ async function main() {
       await runIsolatedChrome([`--window-size=${width},${height}`, `--screenshot=${blankPath}`, `${baseUrl}/__blank.html`]);
       const screenshot = fs.readFileSync(screenshotPath);
       const blank = fs.readFileSync(blankPath);
-      const dimensions = parsePngDimensions(screenshot);
-      if (dimensions.width !== width || dimensions.height !== height) {
-        throw new Error(`${name} screenshot dimensions are ${dimensions.width}x${dimensions.height}, expected ${width}x${height}`);
-      }
-      if (crypto.createHash('sha256').update(screenshot).digest('hex') === crypto.createHash('sha256').update(blank).digest('hex')) {
-        throw new Error(`${name} screenshot matches a blank page`);
-      }
+      assertScreenshotPair(name, screenshot, blank, viewport);
     }
     process.stdout.write('Real-browser proof smoke passed for both actions, responsive layout, and desktop/mobile screenshots.\n');
   } finally {
@@ -327,4 +337,11 @@ if (require.main === module) {
   });
 }
 
-module.exports = { assertInteractionDom, assertResponsiveLayout, browserHarnessUrl, chromeProfilePath, parsePngDimensions };
+module.exports = {
+  assertInteractionDom,
+  assertResponsiveLayout,
+  assertScreenshotPair,
+  browserHarnessUrl,
+  chromeProfilePath,
+  parsePngDimensions,
+};

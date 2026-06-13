@@ -39,6 +39,8 @@ Priority:
   at least 44 pixels tall in the real-browser smoke
 - Keep browser launches on isolated Chrome profiles with a bounded 30-second
   timeout
+- Keep proof and blank screenshot baselines recognizable by their PNG/IHDR
+  headers and matched to their declared viewports before comparison
 - Keep local secrets and editor metadata out of the checked-in proof artifact
 - Avoid adding runtime dependencies without a manifest update
 

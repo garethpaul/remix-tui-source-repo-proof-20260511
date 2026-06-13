@@ -40,7 +40,9 @@ Helpful reports include:
   never receives repository secrets.
 - The hosted gate requires a real-browser Chrome smoke that serves only on
   loopback, clicks both proof controls, and compares desktop/mobile screenshots
-  against blank pages without contacting external origins.
+  against blank pages without contacting external origins. Both sides of each
+  comparison must have recognized PNG/IHDR headers and exact viewport
+  dimensions before digest comparison.
 - Each launch uses isolated Chrome profiles and a bounded 30-second timeout so
   a prior process cannot retain the next process's profile lock.
 - Demo action status lookups accept only checked-in own properties; inherited

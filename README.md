@@ -78,7 +78,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Browser processes use isolated Chrome profiles and a bounded 30-second
   timeout while preserving all interaction and screenshot checks. Explicit
   1280x720 and 390x844 iframe viewports require visible in-viewport controls, 44-pixel
-  button heights, and non-overlapping actions.
+  button heights, and non-overlapping actions. Proof and blank comparison images
+  must both have recognized PNG/IHDR headers and exact viewport dimensions
+  before their digests are compared.
 - The local path checks reject manifest entries or HTML asset references that
   try to escape `poe-source`.
 - The HTML checks also require the visible status message to keep `role="status"`

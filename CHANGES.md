@@ -2,6 +2,8 @@
 
 ## 2026-06-13
 
+- Required both proof and blank comparison screenshots to have recognized
+  PNG/IHDR headers and exact viewport dimensions before digest comparison.
 - Made responsive browser geometry independent of headless Chrome outer-window
   decoration by applying each declared viewport directly to the smoke iframe.
 - Made recursive browser verification independent of the caller's working

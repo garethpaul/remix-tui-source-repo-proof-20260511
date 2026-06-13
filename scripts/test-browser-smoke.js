@@ -4,15 +4,32 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const { assertInteractionDom, assertResponsiveLayout, browserHarnessUrl, chromeProfilePath, parsePngDimensions } = require('./smoke-browser');
+const {
+  assertInteractionDom,
+  assertResponsiveLayout,
+  assertScreenshotPair,
+  browserHarnessUrl,
+  chromeProfilePath,
+  parsePngDimensions,
+} = require('./smoke-browser');
 
-const png = Buffer.alloc(24);
-Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(png, 0);
-png.write('IHDR', 12, 'ascii');
-png.writeUInt32BE(1280, 16);
-png.writeUInt32BE(720, 20);
+function pngWithDimensions(width, height, marker = 0) {
+  const contents = Buffer.alloc(25);
+  Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(contents, 0);
+  contents.write('IHDR', 12, 'ascii');
+  contents.writeUInt32BE(width, 16);
+  contents.writeUInt32BE(height, 20);
+  contents[24] = marker;
+  return contents;
+}
+
+const png = pngWithDimensions(1280, 720);
 assert.deepStrictEqual(parsePngDimensions(png), { width: 1280, height: 720 });
 assert.throws(() => parsePngDimensions(Buffer.alloc(24)), /valid PNG/u);
+assert.doesNotThrow(() => assertScreenshotPair('desktop', png, pngWithDimensions(1280, 720, 1), { width: 1280, height: 720 }));
+assert.throws(() => assertScreenshotPair('desktop', png, Buffer.alloc(24), { width: 1280, height: 720 }), /valid PNG/u);
+assert.throws(() => assertScreenshotPair('desktop', png, pngWithDimensions(1280, 719, 1), { width: 1280, height: 720 }), /blank screenshot dimensions/u);
+assert.throws(() => assertScreenshotPair('desktop', png, Buffer.from(png), { width: 1280, height: 720 }), /matches a blank page/u);
 
 const result = {
   buttonCount: 2,
@@ -54,7 +71,9 @@ assert.strictEqual(
 );
 
 const makefile = fs.readFileSync(path.join(__dirname, '..', 'Makefile'), 'utf8');
+const smokeSource = fs.readFileSync(path.join(__dirname, 'smoke-browser.js'), 'utf8');
 assert.ok(makefile.includes('scripts/test-browser-smoke.js'));
 assert.ok(makefile.includes('scripts/smoke-browser.js'));
+assert.ok(smokeSource.includes('assertScreenshotPair(name, screenshot, blank, viewport);'));
 
 console.log('browser smoke contract tests passed');
