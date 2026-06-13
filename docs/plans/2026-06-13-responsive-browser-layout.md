@@ -29,6 +29,11 @@ visual-regression framework.
 ## Work Completed
 
 - Made the isolated smoke iframe fill each declared browser viewport exactly.
+- Encoded each declared viewport into the harness URL and sized the iframe
+  explicitly before loading the proof, avoiding dependence on headless
+  Chrome's outer-window decoration height.
+- Rooted the recursive browser target so external-directory `make check`
+  executes the same real-Chrome contract.
 - Recorded computed status and button geometry after both interactions.
 - Added fail-closed viewport, visibility, containment, 44-pixel height,
   overlap, numeric geometry, and opacity validation.
@@ -42,13 +47,21 @@ visual-regression framework.
 - `node scripts/test-browser-smoke.js`
 - `CHROME_BIN=google-chrome node scripts/smoke-browser.js`
 - `CHROME_BIN=google-chrome make check`
-- Focused hostile mutations for viewport, visibility, size, overlap, and wiring
+- External-directory `CHROME_BIN=google-chrome make -f <repo>/Makefile check`
+- Six correction-focused hostile mutations for missing width/height query
+  parameters, bypassed harness wiring, outer-dependent iframe height,
+  unrooted recursive Make, and stale plan status were rejected.
 - `git diff --check`
 
 The helper suite rejected wrong viewport dimensions, off-screen status,
 undersized and overlapping buttons, hidden controls, and malformed geometry.
 The real Chrome smoke and full `make check` passed with isolated profiles and
 the existing 30-second per-process timeout.
+
+Hosted Chrome 149 initially reported a 1280x577 document viewport for an outer
+`--window-size=1280,720`. The explicit iframe viewport correction preserved the
+1280x720 and 390x844 layout contracts while allowing the outer screenshot
+dimensions to remain separately verified.
 
 ## Scope Boundary
 

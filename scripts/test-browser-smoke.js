@@ -4,7 +4,7 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const { assertInteractionDom, assertResponsiveLayout, chromeProfilePath, parsePngDimensions } = require('./smoke-browser');
+const { assertInteractionDom, assertResponsiveLayout, browserHarnessUrl, chromeProfilePath, parsePngDimensions } = require('./smoke-browser');
 
 const png = Buffer.alloc(24);
 Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(png, 0);
@@ -48,6 +48,10 @@ assert.throws(() => assertResponsiveLayout({ ...result, status: { ...result.stat
 
 assert.strictEqual(chromeProfilePath('/tmp/proof', 0), path.join('/tmp/proof', 'chrome-profile-0'));
 assert.notStrictEqual(chromeProfilePath('/tmp/proof', 0), chromeProfilePath('/tmp/proof', 1));
+assert.strictEqual(
+  browserHarnessUrl('http://127.0.0.1:3000', mobileViewport),
+  'http://127.0.0.1:3000/__smoke__.html?width=390&height=844',
+);
 
 const makefile = fs.readFileSync(path.join(__dirname, '..', 'Makefile'), 'utf8');
 assert.ok(makefile.includes('scripts/test-browser-smoke.js'));

@@ -76,8 +76,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   read-only repository permissions, and checkout credential persistence
   disabled on pushes, pull requests, and manual runs.
 - Browser processes use isolated Chrome profiles and a bounded 30-second
-  timeout while preserving all interaction and screenshot checks. At 1280x720
-  and 390x844, the smoke also requires visible in-viewport controls, 44-pixel
+  timeout while preserving all interaction and screenshot checks. Explicit
+  1280x720 and 390x844 iframe viewports require visible in-viewport controls, 44-pixel
   button heights, and non-overlapping actions.
 - The local path checks reject manifest entries or HTML asset references that
   try to escape `poe-source`.

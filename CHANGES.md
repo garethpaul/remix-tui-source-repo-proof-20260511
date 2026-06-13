@@ -2,6 +2,10 @@
 
 ## 2026-06-13
 
+- Made responsive browser geometry independent of headless Chrome outer-window
+  decoration by applying each declared viewport directly to the smoke iframe.
+- Made recursive browser verification independent of the caller's working
+  directory.
 - Added real-Chrome desktop/mobile geometry checks for visible status and
   action controls, 44-pixel button heights, and non-overlapping buttons.
 - Isolated every Chrome launch in its own profile and raised the bounded

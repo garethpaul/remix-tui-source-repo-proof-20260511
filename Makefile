@@ -16,7 +16,7 @@ browser:
 test: lint
 	$(NODE) "$(ROOT)/scripts/test-proof-file-contract.js"
 	$(NODE) "$(ROOT)/scripts/test-browser-smoke.js"
-	$(MAKE) browser
+	$(MAKE) -f "$(ROOT)/Makefile" browser
 
 build:
 	@echo "static source proof; no build step required"

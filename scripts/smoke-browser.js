@@ -25,15 +25,16 @@ const contentTypes = new Map([
   ['.js', 'text/javascript; charset=utf-8'],
 ]);
 
-const harnessHtml = `<!doctype html>
+function renderHarnessHtml(width, height) {
+  return `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'unsafe-inline'; frame-src 'self'; object-src 'none'">
   <title>Proof browser smoke</title>
   <style>
-    html, body { width: 100%; height: 100%; margin: 0; }
-    #proof { display: block; width: 100vw; height: 100vh; border: 0; }
+    html, body { margin: 0; }
+    #proof { display: block; width: ${width}px; height: ${height}px; border: 0; }
   </style>
 </head>
 <body>
@@ -42,6 +43,7 @@ const harnessHtml = `<!doctype html>
   <script src="/__smoke__.js"></script>
 </body>
 </html>`;
+}
 
 const harnessScript = `(() => {
   'use strict';
@@ -102,15 +104,24 @@ function send(response, status, contentType, body) {
 
 function createServer() {
   return http.createServer((request, response) => {
+    let requestUrl;
     let pathname;
     try {
-      pathname = decodeURIComponent(new URL(request.url || '/', 'http://127.0.0.1').pathname);
+      requestUrl = new URL(request.url || '/', 'http://127.0.0.1');
+      pathname = decodeURIComponent(requestUrl.pathname);
     } catch (error) {
       send(response, 400, 'text/plain; charset=utf-8', 'Bad request');
       return;
     }
 
-    if (pathname === '/__smoke__.html') return send(response, 200, contentTypes.get('.html'), harnessHtml);
+    if (pathname === '/__smoke__.html') {
+      const width = Number(requestUrl.searchParams.get('width'));
+      const height = Number(requestUrl.searchParams.get('height'));
+      if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0 || width > 4096 || height > 4096) {
+        return send(response, 400, 'text/plain; charset=utf-8', 'Invalid viewport');
+      }
+      return send(response, 200, contentTypes.get('.html'), renderHarnessHtml(width, height));
+    }
     if (pathname === '/__smoke__.js') return send(response, 200, contentTypes.get('.js'), harnessScript);
     if (pathname === '/__blank.html') return send(response, 200, contentTypes.get('.html'), blankHtml);
 
@@ -141,6 +152,13 @@ function findChrome() {
 
 function chromeProfilePath(outputRoot, invocation) {
   return path.join(outputRoot, `chrome-profile-${invocation}`);
+}
+
+function browserHarnessUrl(baseUrl, viewport) {
+  const url = new URL('/__smoke__.html', baseUrl);
+  url.searchParams.set('width', String(viewport.width));
+  url.searchParams.set('height', String(viewport.height));
+  return url.toString();
 }
 
 function runChrome(chrome, args) {
@@ -278,7 +296,8 @@ async function main() {
     const baseUrl = `http://127.0.0.1:${port}`;
     for (const [name, width, height] of [['desktop', 1280, 720], ['mobile', 390, 844]]) {
       const viewport = { width, height };
-      const dom = await runIsolatedChrome([`--window-size=${width},${height}`, '--dump-dom', `${baseUrl}/__smoke__.html`]);
+      const harnessUrl = browserHarnessUrl(baseUrl, viewport);
+      const dom = await runIsolatedChrome([`--window-size=${width},${height}`, '--dump-dom', harnessUrl]);
       assertInteractionDom(dom, viewport);
       const screenshotPath = path.join(outputRoot, `${name}.png`);
       const blankPath = path.join(outputRoot, `${name}-blank.png`);
@@ -308,4 +327,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { assertInteractionDom, assertResponsiveLayout, chromeProfilePath, parsePngDimensions };
+module.exports = { assertInteractionDom, assertResponsiveLayout, browserHarnessUrl, chromeProfilePath, parsePngDimensions };

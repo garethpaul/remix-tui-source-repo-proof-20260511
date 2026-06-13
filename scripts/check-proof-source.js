@@ -246,6 +246,8 @@ if (fs.existsSync(browserSmokePath)) {
     'assertResponsiveLayout',
     'button.height < 44',
     'Browser action buttons overlap',
+    'function browserHarnessUrl(baseUrl, viewport)',
+    'const harnessUrl = browserHarnessUrl(baseUrl, viewport);',
     "['desktop', 1280, 720]",
     "['mobile', 390, 844]",
   ].forEach((fragment) => {
@@ -255,7 +257,7 @@ if (fs.existsSync(browserSmokePath)) {
 
 if (fs.existsSync(browserSmokeTestPath)) {
   const browserSmokeTest = readText(browserSmokeTestPath);
-  ['viewport mismatch', 'below 44', 'overlap', 'visibly rendered'].forEach((fragment) => {
+  ['browserHarnessUrl', 'width=390&height=844', 'viewport mismatch', 'below 44', 'overlap', 'visibly rendered'].forEach((fragment) => {
     if (!browserSmokeTest.includes(fragment)) failures.push(`browser smoke tests must preserve responsive layout mutation: ${fragment}`);
   });
 }
@@ -265,7 +267,7 @@ if (!fs.existsSync(makefilePath)) {
   failures.push('Makefile is missing');
 } else {
   const makefile = readText(makefilePath);
-  ['scripts/smoke-browser.js', 'scripts/test-browser-smoke.js', '$(MAKE) browser'].forEach((fragment) => {
+  ['scripts/smoke-browser.js', 'scripts/test-browser-smoke.js', '$(MAKE) -f "$(ROOT)/Makefile" browser'].forEach((fragment) => {
     if (!makefile.includes(fragment)) failures.push(`Makefile must preserve real-browser proof command: ${fragment}`);
   });
 }
