@@ -1,5 +1,13 @@
 # Changes
 
+## 2026-06-13
+
+- Isolated every Chrome launch in its own profile and raised the bounded
+  per-process timeout to 30 seconds without reducing interaction or screenshot
+  coverage.
+- Preserved isolated Chrome profiles and the 30-second bound in static and
+  helper contracts.
+
 ## 2026-06-12
 
 - Added a dependency-free real-browser Chrome smoke for both proof actions and

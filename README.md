@@ -75,6 +75,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   real-browser smoke on Node.js 20 and 24 using immutable action revisions,
   read-only repository permissions, and checkout credential persistence
   disabled on pushes, pull requests, and manual runs.
+- Browser processes use isolated Chrome profiles and a bounded 30-second
+  timeout while preserving all interaction and screenshot checks.
 - The local path checks reject manifest entries or HTML asset references that
   try to escape `poe-source`.
 - The HTML checks also require the visible status message to keep `role="status"`

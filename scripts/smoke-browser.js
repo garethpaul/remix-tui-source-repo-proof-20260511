@@ -10,7 +10,7 @@ const path = require('path');
 
 const root = path.resolve(__dirname, '..');
 const sourceRoot = path.join(root, 'poe-source');
-const chromeTimeoutMs = 15000;
+const chromeTimeoutMs = 30000;
 const chromeCandidates = [
   process.env.CHROME_BIN,
   'google-chrome',
@@ -112,6 +112,10 @@ function findChrome() {
   throw new Error(`Chrome or Chromium is required; checked: ${chromeCandidates.join(', ')}`);
 }
 
+function chromeProfilePath(outputRoot, invocation) {
+  return path.join(outputRoot, `chrome-profile-${invocation}`);
+}
+
 function runChrome(chrome, args) {
   return new Promise((resolve, reject) => {
     const processHandle = childProcess.spawn(chrome, [
@@ -185,19 +189,22 @@ async function main() {
   const chrome = findChrome();
   const server = createServer();
   const outputRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'remix-proof-browser-'));
-  const userDataRoot = path.join(outputRoot, 'chrome-profile');
-  fs.mkdirSync(userDataRoot);
+  let chromeInvocation = 0;
+  const runIsolatedChrome = (args) => runChrome(chrome, [
+    `--user-data-dir=${chromeProfilePath(outputRoot, chromeInvocation++)}`,
+    ...args,
+  ]);
   try {
     const port = await listen(server);
     const baseUrl = `http://127.0.0.1:${port}`;
-    const dom = await runChrome(chrome, [`--user-data-dir=${userDataRoot}`, '--dump-dom', `${baseUrl}/__smoke__.html`]);
+    const dom = await runIsolatedChrome(['--dump-dom', `${baseUrl}/__smoke__.html`]);
     assertInteractionDom(dom);
 
     for (const [name, width, height] of [['desktop', 1280, 720], ['mobile', 390, 844]]) {
       const screenshotPath = path.join(outputRoot, `${name}.png`);
       const blankPath = path.join(outputRoot, `${name}-blank.png`);
-      await runChrome(chrome, [`--user-data-dir=${userDataRoot}`, `--window-size=${width},${height}`, `--screenshot=${screenshotPath}`, `${baseUrl}/index.html`]);
-      await runChrome(chrome, [`--user-data-dir=${userDataRoot}`, `--window-size=${width},${height}`, `--screenshot=${blankPath}`, `${baseUrl}/__blank.html`]);
+      await runIsolatedChrome([`--window-size=${width},${height}`, `--screenshot=${screenshotPath}`, `${baseUrl}/index.html`]);
+      await runIsolatedChrome([`--window-size=${width},${height}`, `--screenshot=${blankPath}`, `${baseUrl}/__blank.html`]);
       const screenshot = fs.readFileSync(screenshotPath);
       const blank = fs.readFileSync(blankPath);
       const dimensions = parsePngDimensions(screenshot);
@@ -222,4 +229,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { assertInteractionDom, parsePngDimensions };
+module.exports = { assertInteractionDom, chromeProfilePath, parsePngDimensions };

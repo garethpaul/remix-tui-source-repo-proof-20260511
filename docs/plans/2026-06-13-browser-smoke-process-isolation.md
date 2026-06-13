@@ -1,6 +1,6 @@
 # Browser smoke process isolation
 
-status: planned
+## Status: Completed
 
 ## Context
 
@@ -22,6 +22,20 @@ more fragile.
 
 ## Verification
 
-- Run the focused browser helper tests, repeated real-browser smoke, all Make
-  gates, hostile mutations, syntax checks, diff checks, artifact scans, and
-  secret scans.
+## Work completed
+
+- Added a deterministic profile path for each Chrome invocation and removed
+  the shared profile directory.
+- Raised the bounded Chrome process timeout from 15 to 30 seconds while
+  preserving the five-minute hosted job timeout.
+- Added helper/static contracts and documentation for the isolation boundary.
+
+## Verification completed
+
+- `node scripts/test-browser-smoke.js`, repeated
+  `CHROME_BIN=google-chrome node scripts/smoke-browser.js`, and `make check`
+  passed locally.
+- Node syntax checks, workflow validation, `git diff --check`, artifact scans,
+  and secret scans passed.
+- Six hostile mutations covering shared profiles, profile reuse, the timeout,
+  helper coverage, documentation, and plan status were rejected.

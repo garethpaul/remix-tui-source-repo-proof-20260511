@@ -18,6 +18,7 @@ const hostedValidationPlanPath = path.join(plansRoot, '2026-06-10-hosted-proof-v
 const hostedValidationWorkflowPath = path.join(root, '.github', 'workflows', 'check.yml');
 const browserSmokePath = path.join(root, 'scripts', 'smoke-browser.js');
 const browserSmokeTestPath = path.join(root, 'scripts', 'test-browser-smoke.js');
+const browserIsolationPlanPath = path.join(plansRoot, '2026-06-13-browser-smoke-process-isolation.md');
 const expectedSecurityPolicy = "default-src 'self'; script-src 'self'; style-src 'self'; base-uri 'none'; object-src 'none'";
 const failures = [];
 let expectedDemoSummary = 'Repo crystal rally source complete';
@@ -211,6 +212,29 @@ for (const browserPath of [browserSmokePath, browserSmokeTestPath]) {
   }
 }
 
+if (!fs.existsSync(browserIsolationPlanPath)) {
+  failures.push('docs/plans/2026-06-13-browser-smoke-process-isolation.md is missing');
+}
+
+if (fs.existsSync(browserSmokePath)) {
+  const browserSmoke = readText(browserSmokePath);
+  [
+    'const chromeTimeoutMs = 30000;',
+    'function chromeProfilePath(outputRoot, invocation)',
+    '`--user-data-dir=${chromeProfilePath(outputRoot, chromeInvocation++)}`',
+    'const runIsolatedChrome = (args)',
+  ].forEach((fragment) => {
+    if (!browserSmoke.includes(fragment)) failures.push(`browser smoke must preserve process isolation: ${fragment}`);
+  });
+}
+
+if (fs.existsSync(browserSmokeTestPath)) {
+  const browserSmokeTest = readText(browserSmokeTestPath);
+  ['chromeProfilePath', "'chrome-profile-0'", 'assert.notStrictEqual'].forEach((fragment) => {
+    if (!browserSmokeTest.includes(fragment)) failures.push(`browser smoke tests must preserve process isolation: ${fragment}`);
+  });
+}
+
 const makefilePath = path.join(root, 'Makefile');
 if (!fs.existsSync(makefilePath)) {
   failures.push('Makefile is missing');
@@ -225,6 +249,14 @@ if (!fs.existsSync(makefilePath)) {
   const docsPath = path.join(root, relativePath);
   if (!fs.existsSync(docsPath) || !readText(docsPath).includes('GitHub Actions')) {
     failures.push(`${relativePath} must document the GitHub Actions baseline`);
+  }
+});
+
+['README.md', 'VISION.md', 'SECURITY.md', 'CHANGES.md'].forEach((relativePath) => {
+  const docsPath = path.join(root, relativePath);
+  const contents = fs.existsSync(docsPath) ? readText(docsPath) : '';
+  if (!contents.includes('isolated Chrome profiles') || !contents.includes('30-second')) {
+    failures.push(`${relativePath} must document isolated Chrome profiles and the 30-second bound`);
   }
 });
 

@@ -41,6 +41,8 @@ Helpful reports include:
 - The hosted gate requires a real-browser Chrome smoke that serves only on
   loopback, clicks both proof controls, and compares desktop/mobile screenshots
   against blank pages without contacting external origins.
+- Each launch uses isolated Chrome profiles and a bounded 30-second timeout so
+  a prior process cannot retain the next process's profile lock.
 - Demo action status lookups accept only checked-in own properties; inherited
   object property names must fall back to the documented proof summary.
 
