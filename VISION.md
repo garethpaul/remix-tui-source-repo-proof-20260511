@@ -35,6 +35,8 @@ Priority:
 - Keep the dependency-free proof contract running on supported Node.js lines
   in credential-free GitHub Actions validation
 - Keep a dependency-free real-browser interaction and screenshot smoke
+- Keep desktop/mobile status and action controls visible, non-overlapping, and
+  at least 44 pixels tall in the real-browser smoke
 - Keep browser launches on isolated Chrome profiles with a bounded 30-second
   timeout
 - Keep local secrets and editor metadata out of the checked-in proof artifact

@@ -29,8 +29,12 @@ const harnessHtml = `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; frame-src 'self'; object-src 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'unsafe-inline'; frame-src 'self'; object-src 'none'">
   <title>Proof browser smoke</title>
+  <style>
+    html, body { width: 100%; height: 100%; margin: 0; }
+    #proof { display: block; width: 100vw; height: 100vh; border: 0; }
+  </style>
 </head>
 <body>
   <iframe id="proof" src="/index.html" title="Proof"></iframe>
@@ -44,6 +48,21 @@ const harnessScript = `(() => {
   const frame = document.getElementById('proof');
   const result = document.getElementById('result');
   let complete = false;
+  const geometry = (element) => {
+    const rect = element.getBoundingClientRect();
+    const style = frame.contentWindow.getComputedStyle(element);
+    return {
+      left: rect.left,
+      top: rect.top,
+      right: rect.right,
+      bottom: rect.bottom,
+      width: rect.width,
+      height: rect.height,
+      display: style.display,
+      visibility: style.visibility,
+      opacity: style.opacity,
+    };
+  };
   const run = () => {
     if (complete) return;
     try {
@@ -57,7 +76,15 @@ const harnessScript = `(() => {
       const charged = status.textContent;
       buttons[1].click();
       const released = status.textContent;
-      result.textContent = JSON.stringify({ buttonCount: buttons.length, initial, charged, released });
+      result.textContent = JSON.stringify({
+        buttonCount: buttons.length,
+        initial,
+        charged,
+        released,
+        viewport: { width: frame.contentWindow.innerWidth, height: frame.contentWindow.innerHeight },
+        status: geometry(status),
+        buttons: Array.from(buttons, geometry),
+      });
     } catch (error) {
       result.textContent = JSON.stringify({ error: error.message });
     }
@@ -159,19 +186,71 @@ function parsePngDimensions(contents) {
   return { width: contents.readUInt32BE(16), height: contents.readUInt32BE(20) };
 }
 
-function assertInteractionDom(dom) {
+function assertVisibleInsideViewport(name, geometry, viewport) {
+  const numericFields = ['left', 'top', 'right', 'bottom', 'width', 'height'];
+  if (!geometry || numericFields.some((field) => !Number.isFinite(geometry[field]))) {
+    throw new Error(`${name} geometry is malformed`);
+  }
+  const opacity = Number(geometry.opacity);
+  const widthMatches = Math.abs((geometry.right - geometry.left) - geometry.width) < 0.01;
+  const heightMatches = Math.abs((geometry.bottom - geometry.top) - geometry.height) < 0.01;
+  if (!widthMatches || !heightMatches || !Number.isFinite(opacity)) {
+    throw new Error(`${name} geometry is malformed`);
+  }
+  if (geometry.display === 'none' || geometry.visibility !== 'visible' || opacity <= 0) {
+    throw new Error(`${name} is not visibly rendered`);
+  }
+  if (
+    geometry.width <= 0 ||
+    geometry.height <= 0 ||
+    geometry.left < 0 ||
+    geometry.top < 0 ||
+    geometry.right > viewport.width ||
+    geometry.bottom > viewport.height
+  ) {
+    throw new Error(`${name} is outside the ${viewport.width}x${viewport.height} viewport`);
+  }
+}
+
+function assertResponsiveLayout(result, expectedViewport) {
+  if (!result.viewport || result.viewport.width !== expectedViewport.width || result.viewport.height !== expectedViewport.height) {
+    throw new Error(`Browser viewport mismatch: ${JSON.stringify(result.viewport)}`);
+  }
+  if (!Array.isArray(result.buttons) || result.buttons.length !== 2) {
+    throw new Error('Browser layout must include exactly two button rectangles');
+  }
+
+  assertVisibleInsideViewport('status', result.status, expectedViewport);
+  result.buttons.forEach((button, index) => {
+    assertVisibleInsideViewport(`button ${index + 1}`, button, expectedViewport);
+    if (button.height < 44) throw new Error(`button ${index + 1} height is below 44 pixels`);
+  });
+
+  const [first, second] = result.buttons;
+  const overlaps = first.left < second.right && first.right > second.left && first.top < second.bottom && first.bottom > second.top;
+  if (overlaps) throw new Error('Browser action buttons overlap');
+}
+
+function assertInteractionDom(dom, expectedViewport) {
   const match = dom.match(/<pre id="result">([^<]+)<\/pre>/u);
   if (!match) throw new Error('Browser smoke result element is missing');
   const result = JSON.parse(match[1].replaceAll('&quot;', '"').replaceAll('&amp;', '&'));
+  const expectedInteraction = {
+    buttonCount: result.buttonCount,
+    initial: result.initial,
+    charged: result.charged,
+    released: result.released,
+  };
   const expected = {
     buttonCount: 2,
     initial: 'Repo crystal source ready',
     charged: 'Player 1 crystal paddle charged',
     released: 'Player 1 released the crystal beam',
   };
-  if (JSON.stringify(result) !== JSON.stringify(expected)) {
+  if (JSON.stringify(expectedInteraction) !== JSON.stringify(expected)) {
     throw new Error(`Browser interaction result mismatch: ${JSON.stringify(result)}`);
   }
+  assertResponsiveLayout(result, expectedViewport);
 }
 
 async function listen(server) {
@@ -197,10 +276,10 @@ async function main() {
   try {
     const port = await listen(server);
     const baseUrl = `http://127.0.0.1:${port}`;
-    const dom = await runIsolatedChrome(['--dump-dom', `${baseUrl}/__smoke__.html`]);
-    assertInteractionDom(dom);
-
     for (const [name, width, height] of [['desktop', 1280, 720], ['mobile', 390, 844]]) {
+      const viewport = { width, height };
+      const dom = await runIsolatedChrome([`--window-size=${width},${height}`, '--dump-dom', `${baseUrl}/__smoke__.html`]);
+      assertInteractionDom(dom, viewport);
       const screenshotPath = path.join(outputRoot, `${name}.png`);
       const blankPath = path.join(outputRoot, `${name}-blank.png`);
       await runIsolatedChrome([`--window-size=${width},${height}`, `--screenshot=${screenshotPath}`, `${baseUrl}/index.html`]);
@@ -215,7 +294,7 @@ async function main() {
         throw new Error(`${name} screenshot matches a blank page`);
       }
     }
-    process.stdout.write('Real-browser proof smoke passed for both actions and desktop/mobile screenshots.\n');
+    process.stdout.write('Real-browser proof smoke passed for both actions, responsive layout, and desktop/mobile screenshots.\n');
   } finally {
     await close(server).catch(() => {});
     fs.rmSync(outputRoot, { recursive: true, force: true });
@@ -229,4 +308,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { assertInteractionDom, chromeProfilePath, parsePngDimensions };
+module.exports = { assertInteractionDom, assertResponsiveLayout, chromeProfilePath, parsePngDimensions };

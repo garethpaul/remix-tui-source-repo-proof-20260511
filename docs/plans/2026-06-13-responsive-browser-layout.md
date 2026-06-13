@@ -1,6 +1,6 @@
 # Responsive Browser Layout Contract
 
-## Status: In Progress
+## Status: Completed
 
 ## Context
 
@@ -26,13 +26,29 @@ visual-regression framework.
 - Reject overlapping action buttons and malformed browser evidence.
 - Preserve isolated Chrome profiles and the bounded per-process timeout.
 
-## Planned Verification
+## Work Completed
+
+- Made the isolated smoke iframe fill each declared browser viewport exactly.
+- Recorded computed status and button geometry after both interactions.
+- Added fail-closed viewport, visibility, containment, 44-pixel height,
+  overlap, numeric geometry, and opacity validation.
+- Ran the interaction harness at both declared viewport sizes while preserving
+  exact-size screenshot and blank-page comparisons.
+- Added pure helper mutations and static wiring contracts.
+- Updated README, vision, and change documentation.
+
+## Verification
 
 - `node scripts/test-browser-smoke.js`
 - `CHROME_BIN=google-chrome node scripts/smoke-browser.js`
 - `CHROME_BIN=google-chrome make check`
 - Focused hostile mutations for viewport, visibility, size, overlap, and wiring
 - `git diff --check`
+
+The helper suite rejected wrong viewport dimensions, off-screen status,
+undersized and overlapping buttons, hidden controls, and malformed geometry.
+The real Chrome smoke and full `make check` passed with isolated profiles and
+the existing 30-second per-process timeout.
 
 ## Scope Boundary
 

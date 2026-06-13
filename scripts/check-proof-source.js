@@ -19,6 +19,7 @@ const hostedValidationWorkflowPath = path.join(root, '.github', 'workflows', 'ch
 const browserSmokePath = path.join(root, 'scripts', 'smoke-browser.js');
 const browserSmokeTestPath = path.join(root, 'scripts', 'test-browser-smoke.js');
 const browserIsolationPlanPath = path.join(plansRoot, '2026-06-13-browser-smoke-process-isolation.md');
+const responsiveLayoutPlanPath = path.join(plansRoot, '2026-06-13-responsive-browser-layout.md');
 const expectedSecurityPolicy = "default-src 'self'; script-src 'self'; style-src 'self'; base-uri 'none'; object-src 'none'";
 const failures = [];
 let expectedDemoSummary = 'Repo crystal rally source complete';
@@ -216,6 +217,10 @@ if (!fs.existsSync(browserIsolationPlanPath)) {
   failures.push('docs/plans/2026-06-13-browser-smoke-process-isolation.md is missing');
 }
 
+if (!fs.existsSync(responsiveLayoutPlanPath)) {
+  failures.push('docs/plans/2026-06-13-responsive-browser-layout.md is missing');
+}
+
 if (fs.existsSync(browserSmokePath)) {
   const browserSmoke = readText(browserSmokePath);
   [
@@ -232,6 +237,26 @@ if (fs.existsSync(browserSmokeTestPath)) {
   const browserSmokeTest = readText(browserSmokeTestPath);
   ['chromeProfilePath', "'chrome-profile-0'", 'assert.notStrictEqual'].forEach((fragment) => {
     if (!browserSmokeTest.includes(fragment)) failures.push(`browser smoke tests must preserve process isolation: ${fragment}`);
+  });
+}
+
+if (fs.existsSync(browserSmokePath)) {
+  const browserSmoke = readText(browserSmokePath);
+  [
+    'assertResponsiveLayout',
+    'button.height < 44',
+    'Browser action buttons overlap',
+    "['desktop', 1280, 720]",
+    "['mobile', 390, 844]",
+  ].forEach((fragment) => {
+    if (!browserSmoke.includes(fragment)) failures.push(`browser smoke must preserve responsive layout contract: ${fragment}`);
+  });
+}
+
+if (fs.existsSync(browserSmokeTestPath)) {
+  const browserSmokeTest = readText(browserSmokeTestPath);
+  ['viewport mismatch', 'below 44', 'overlap', 'visibly rendered'].forEach((fragment) => {
+    if (!browserSmokeTest.includes(fragment)) failures.push(`browser smoke tests must preserve responsive layout mutation: ${fragment}`);
   });
 }
 

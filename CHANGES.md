@@ -2,6 +2,8 @@
 
 ## 2026-06-13
 
+- Added real-Chrome desktop/mobile geometry checks for visible status and
+  action controls, 44-pixel button heights, and non-overlapping buttons.
 - Isolated every Chrome launch in its own profile and raised the bounded
   per-process timeout to 30 seconds without reducing interaction or screenshot
   coverage.
