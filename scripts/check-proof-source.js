@@ -21,6 +21,7 @@ const browserSmokeTestPath = path.join(root, 'scripts', 'test-browser-smoke.js')
 const browserIsolationPlanPath = path.join(plansRoot, '2026-06-13-browser-smoke-process-isolation.md');
 const responsiveLayoutPlanPath = path.join(plansRoot, '2026-06-13-responsive-browser-layout.md');
 const screenshotBaselinePlanPath = path.join(plansRoot, '2026-06-13-screenshot-baseline-integrity.md');
+const makeRootOverridePlanPath = path.join(plansRoot, '2026-06-14-make-root-override-protection.md');
 const expectedSecurityPolicy = "default-src 'self'; script-src 'self'; style-src 'self'; base-uri 'none'; object-src 'none'";
 const failures = [];
 let expectedDemoSummary = 'Repo crystal rally source complete';
@@ -305,9 +306,23 @@ if (!fs.existsSync(makefilePath)) {
   failures.push('Makefile is missing');
 } else {
   const makefile = readText(makefilePath);
+  if (!makefile.includes('override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))')) {
+    failures.push('Makefile must protect the repository root from command-line overrides');
+  }
   ['scripts/smoke-browser.js', 'scripts/test-browser-smoke.js', '$(MAKE) -f "$(ROOT)/Makefile" browser'].forEach((fragment) => {
     if (!makefile.includes(fragment)) failures.push(`Makefile must preserve real-browser proof command: ${fragment}`);
   });
+}
+
+if (fs.existsSync(makeRootOverridePlanPath)) {
+  const makeRootOverridePlan = readText(makeRootOverridePlanPath);
+  ['Node 20', 'Node 24', 'ROOT=/tmp', 'hostile mutations rejected'].forEach((evidence) => {
+    if (!makeRootOverridePlan.includes(evidence)) {
+      failures.push(`${rel(makeRootOverridePlanPath)} must preserve completed evidence: ${evidence}`);
+    }
+  });
+} else {
+  failures.push(`${rel(makeRootOverridePlanPath)} is missing`);
 }
 
 ['README.md', 'VISION.md', 'SECURITY.md', 'CHANGES.md'].forEach((relativePath) => {
