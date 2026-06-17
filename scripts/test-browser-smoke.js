@@ -9,7 +9,9 @@ const {
   assertResponsiveLayout,
   assertScreenshotPair,
   browserHarnessUrl,
+  chromeProbeTimeoutMs,
   chromeProfilePath,
+  findChrome,
   parsePngDimensions,
 } = require('./smoke-browser');
 
@@ -68,6 +70,31 @@ assert.notStrictEqual(chromeProfilePath('/tmp/proof', 0), chromeProfilePath('/tm
 assert.strictEqual(
   browserHarnessUrl('http://127.0.0.1:3000', mobileViewport),
   'http://127.0.0.1:3000/__smoke__.html?width=390&height=844',
+);
+
+const probeCalls = [];
+const selectedChrome = findChrome(['stuck-chrome', 'working-chrome'], (candidate, args, options) => {
+  probeCalls.push({ candidate, args, options });
+  if (candidate === 'stuck-chrome') return { error: Object.assign(new Error('timed out'), { code: 'ETIMEDOUT' }), status: null };
+  return { error: undefined, status: 0 };
+});
+assert.strictEqual(selectedChrome, 'working-chrome');
+assert.ok(chromeProbeTimeoutMs > 0 && chromeProbeTimeoutMs < 30000);
+assert.deepStrictEqual(probeCalls, [
+  {
+    candidate: 'stuck-chrome',
+    args: ['--version'],
+    options: { encoding: 'utf8', timeout: chromeProbeTimeoutMs, killSignal: 'SIGKILL' },
+  },
+  {
+    candidate: 'working-chrome',
+    args: ['--version'],
+    options: { encoding: 'utf8', timeout: chromeProbeTimeoutMs, killSignal: 'SIGKILL' },
+  },
+]);
+assert.throws(
+  () => findChrome(['missing-chrome'], () => ({ error: new Error('missing'), status: null })),
+  /checked: missing-chrome/u,
 );
 
 const makefile = fs.readFileSync(path.join(__dirname, '..', 'Makefile'), 'utf8');

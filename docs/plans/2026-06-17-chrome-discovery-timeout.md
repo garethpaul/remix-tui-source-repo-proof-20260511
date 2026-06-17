@@ -1,11 +1,6 @@
----
-title: Bound Chrome Discovery Probes
-date: 2026-06-17
-type: implementation-plan
-status: in-progress
----
-
 # Bound Chrome Discovery Probes
+
+## Status: Completed
 
 ## Context
 
@@ -86,3 +81,28 @@ validation, and process isolation.
 - The change does not add browser engines, dependencies, or package metadata.
 - The proof remains a static local artifact validated with installed Chrome;
   cross-browser rendering remains outside this change.
+
+## Work Completed
+
+- Added a 5-second Chrome discovery timeout with `SIGKILL` while preserving the
+  existing ordered candidate fallback and success criteria.
+- Added deterministic regression coverage for option forwarding, a timed-out
+  first candidate, later-candidate selection, and all-candidate failure.
+- Added source, test, README, changelog, and completed-plan contracts without
+  changing dependencies, workflows, browser interactions, or screenshots.
+
+## Verification Completed
+
+- Node 20.19.5 and Node 24.16.0 passed the focused browser contract and the
+  real Chrome desktop/mobile interaction and screenshot smoke.
+- The exact worktree and a Git-backed final-state projection passed repository
+  `make check` and the absolute-Makefile gate from an external directory with
+  hostile `ROOT=/tmp` on both Node versions.
+- Ten hostile mutations were rejected across timeout forwarding, `SIGKILL`,
+  the upper bound, candidate fallback, the selection assertion, README
+  guidance, completed status, plan evidence, and plan registration.
+- Exact diff, artifact, credential, conflict-marker, binary, mode, dependency,
+  workflow, tracked-metadata, clean-worktree, and whitespace audits passed.
+- The optional `agent-browser` pipeline was unavailable on this host; the
+  repository-owned real Chrome smoke supplied the applicable interaction,
+  responsive geometry, and screenshot validation without reducing coverage.

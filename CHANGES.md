@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-17
+
+- Added a 5-second Chrome discovery timeout with `SIGKILL` and deterministic
+  fallback coverage so a stuck candidate cannot block the real-browser gate.
+
 ## 2026-06-13
 
 - Required both proof and blank comparison screenshots to have recognized

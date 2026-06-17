@@ -10,6 +10,7 @@ const path = require('path');
 
 const root = path.resolve(__dirname, '..');
 const sourceRoot = path.join(root, 'poe-source');
+const chromeProbeTimeoutMs = 5000;
 const chromeTimeoutMs = 30000;
 const chromeCandidates = [
   process.env.CHROME_BIN,
@@ -142,12 +143,16 @@ function createServer() {
   });
 }
 
-function findChrome() {
-  for (const candidate of chromeCandidates) {
-    const result = childProcess.spawnSync(candidate, ['--version'], { encoding: 'utf8' });
+function findChrome(candidates = chromeCandidates, probe = childProcess.spawnSync) {
+  for (const candidate of candidates) {
+    const result = probe(candidate, ['--version'], {
+      encoding: 'utf8',
+      timeout: chromeProbeTimeoutMs,
+      killSignal: 'SIGKILL',
+    });
     if (!result.error && result.status === 0) return candidate;
   }
-  throw new Error(`Chrome or Chromium is required; checked: ${chromeCandidates.join(', ')}`);
+  throw new Error(`Chrome or Chromium is required; checked: ${candidates.join(', ')}`);
 }
 
 function chromeProfilePath(outputRoot, invocation) {
@@ -342,6 +347,8 @@ module.exports = {
   assertResponsiveLayout,
   assertScreenshotPair,
   browserHarnessUrl,
+  chromeProbeTimeoutMs,
   chromeProfilePath,
+  findChrome,
   parsePngDimensions,
 };

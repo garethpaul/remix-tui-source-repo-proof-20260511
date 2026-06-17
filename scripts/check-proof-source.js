@@ -22,6 +22,7 @@ const browserIsolationPlanPath = path.join(plansRoot, '2026-06-13-browser-smoke-
 const responsiveLayoutPlanPath = path.join(plansRoot, '2026-06-13-responsive-browser-layout.md');
 const screenshotBaselinePlanPath = path.join(plansRoot, '2026-06-13-screenshot-baseline-integrity.md');
 const makeRootOverridePlanPath = path.join(plansRoot, '2026-06-14-make-root-override-protection.md');
+const chromeDiscoveryTimeoutPlanPath = path.join(plansRoot, '2026-06-17-chrome-discovery-timeout.md');
 const expectedSecurityPolicy = "default-src 'self'; script-src 'self'; style-src 'self'; base-uri 'none'; object-src 'none'";
 const failures = [];
 let expectedDemoSummary = 'Repo crystal rally source complete';
@@ -250,6 +251,15 @@ if (fs.existsSync(browserSmokePath)) {
   ].forEach((fragment) => {
     if (!browserSmoke.includes(fragment)) failures.push(`browser smoke must preserve process isolation: ${fragment}`);
   });
+
+  [
+    'const chromeProbeTimeoutMs = 5000;',
+    'function findChrome(candidates = chromeCandidates, probe = childProcess.spawnSync)',
+    'timeout: chromeProbeTimeoutMs,',
+    "killSignal: 'SIGKILL',",
+  ].forEach((fragment) => {
+    if (!browserSmoke.includes(fragment)) failures.push(`browser smoke must preserve bounded Chrome discovery: ${fragment}`);
+  });
 }
 
 if (fs.existsSync(browserSmokeTestPath)) {
@@ -299,6 +309,15 @@ if (fs.existsSync(browserSmokeTestPath)) {
   ['browserHarnessUrl', 'width=390&height=844', 'viewport mismatch', 'below 44', 'overlap', 'visibly rendered'].forEach((fragment) => {
     if (!browserSmokeTest.includes(fragment)) failures.push(`browser smoke tests must preserve responsive layout mutation: ${fragment}`);
   });
+
+  [
+    "findChrome(['stuck-chrome', 'working-chrome']",
+    "assert.strictEqual(selectedChrome, 'working-chrome')",
+    'chromeProbeTimeoutMs > 0 && chromeProbeTimeoutMs < 30000',
+    "killSignal: 'SIGKILL'",
+  ].forEach((fragment) => {
+    if (!browserSmokeTest.includes(fragment)) failures.push(`browser smoke tests must preserve Chrome discovery timeout coverage: ${fragment}`);
+  });
 }
 
 const makefilePath = path.join(root, 'Makefile');
@@ -323,6 +342,27 @@ if (fs.existsSync(makeRootOverridePlanPath)) {
   });
 } else {
   failures.push(`${rel(makeRootOverridePlanPath)} is missing`);
+}
+
+if (fs.existsSync(chromeDiscoveryTimeoutPlanPath)) {
+  const chromeDiscoveryTimeoutPlan = readText(chromeDiscoveryTimeoutPlanPath);
+  if (!/^## Status: Completed$/mu.test(chromeDiscoveryTimeoutPlan)) {
+    failures.push(`${rel(chromeDiscoveryTimeoutPlanPath)} must record completed status`);
+  }
+  ['5-second', 'SIGKILL', 'hostile mutations', 'make check', 'Exact diff'].forEach((evidence) => {
+    if (!chromeDiscoveryTimeoutPlan.includes(evidence)) {
+      failures.push(`${rel(chromeDiscoveryTimeoutPlanPath)} must preserve completed evidence: ${evidence}`);
+    }
+  });
+} else {
+  failures.push(`${rel(chromeDiscoveryTimeoutPlanPath)} is missing`);
+}
+
+for (const relativePath of ['README.md', 'CHANGES.md']) {
+  const docsPath = path.join(root, relativePath);
+  if (!fs.existsSync(docsPath) || !readText(docsPath).includes('5-second Chrome discovery')) {
+    failures.push(`${relativePath} must document the 5-second Chrome discovery bound`);
+  }
 }
 
 ['README.md', 'VISION.md', 'SECURITY.md', 'CHANGES.md'].forEach((relativePath) => {
