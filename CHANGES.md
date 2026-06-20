@@ -1,14 +1,58 @@
 # Changes
 
+## 2026-06-19
+
+- Resolved Chrome candidates to canonical executable files, deduplicated and
+  bounded discovery, and rejected unsafe relative browser paths.
+- Made valid DOM and screenshot completion terminate lingering Chrome process
+  groups while bounding browser output and preserving the 30-second timeout.
+- Restricted the ephemeral proof server to its exact IPv4 loopback Host,
+  `GET`, manifest-listed regular files, and bounded source responses.
+- Added deterministic request auditing, optional empty favicon handling,
+  bounded non-symlink screenshot reads, and exact source-resource mapping.
+
+## 2026-06-17
+
+- Added a 5-second Chrome discovery timeout with `SIGKILL` and deterministic
+  fallback coverage so a stuck candidate cannot block the real-browser gate.
+
+## 2026-06-13
+
+- Required both proof and blank comparison screenshots to have recognized
+  PNG/IHDR headers and exact viewport dimensions before digest comparison.
+- Made responsive browser geometry independent of headless Chrome outer-window
+  decoration by applying each declared viewport directly to the smoke iframe.
+- Made recursive browser verification independent of the caller's working
+  directory.
+- Added real-Chrome desktop/mobile geometry checks for visible status and
+  action controls, 44-pixel button heights, and non-overlapping buttons.
+- Isolated every Chrome launch in its own profile and raised the bounded
+  per-process timeout to 30 seconds without reducing interaction or screenshot
+  coverage.
+- Preserved isolated Chrome profiles and the 30-second bound in static and
+  helper contracts.
+
+## 2026-06-12
+
+- Added a dependency-free real-browser Chrome smoke for both proof actions and
+  nonblank desktop/mobile screenshots.
+- Added dependency-free real-path and regular-file validation for proof
+  manifest entries and HTML-linked assets.
+- Rejected file and parent-directory symlinks and required `generatedAt` to be
+  a real canonical calendar date.
+
 ## 2026-06-10
 
 - Restricted demo action status lookups to checked-in own properties and added
   adversarial coverage for inherited object property names.
 - Guarded demo action binding against malformed document and button objects.
-- Added pinned, least-privilege GitHub Actions validation on Node.js 20 and 24.
+- Added pinned, credential-free, least-privilege GitHub Actions validation on
+  Node.js 20 and 24 for pushes, pull requests, and manual dispatches.
 - Made the Makefile validation entrypoint independent of the caller's current
   directory.
-- Added fail-closed checks for the hosted workflow and its completed plan.
+- Added fail-closed exact checks for the hosted workflow and both completed CI
+  plans.
+- Added local secret/editor exclusions and fail-closed tracked-metadata checks.
 
 ## 2026-06-09
 

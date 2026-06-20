@@ -5,14 +5,24 @@ const fs = require('fs');
 const crypto = require('crypto');
 const path = require('path');
 const vm = require('vm');
+const { execFileSync } = require('child_process');
+const { isContainedRegularFile, isPathContained, isValidIsoCalendarDate } = require('./proof-file-contract');
 
 const root = path.resolve(__dirname, '..');
 const sourceRoot = path.join(root, 'poe-source');
 const manifestPath = path.join(sourceRoot, 'PACKAGE_MANIFEST.json');
 const plansRoot = path.join(root, 'docs', 'plans');
 const canonicalPlanPath = path.join(plansRoot, '2026-06-08-remix-tui-source-proof-baseline.md');
+const ciPlanPath = path.join(plansRoot, '2026-06-10-ci-baseline.md');
 const hostedValidationPlanPath = path.join(plansRoot, '2026-06-10-hosted-proof-validation.md');
 const hostedValidationWorkflowPath = path.join(root, '.github', 'workflows', 'check.yml');
+const browserSmokePath = path.join(root, 'scripts', 'smoke-browser.js');
+const browserSmokeTestPath = path.join(root, 'scripts', 'test-browser-smoke.js');
+const browserIsolationPlanPath = path.join(plansRoot, '2026-06-13-browser-smoke-process-isolation.md');
+const responsiveLayoutPlanPath = path.join(plansRoot, '2026-06-13-responsive-browser-layout.md');
+const screenshotBaselinePlanPath = path.join(plansRoot, '2026-06-13-screenshot-baseline-integrity.md');
+const makeRootOverridePlanPath = path.join(plansRoot, '2026-06-14-make-root-override-protection.md');
+const chromeDiscoveryTimeoutPlanPath = path.join(plansRoot, '2026-06-17-chrome-discovery-timeout.md');
 const expectedSecurityPolicy = "default-src 'self'; script-src 'self'; style-src 'self'; base-uri 'none'; object-src 'none'";
 const failures = [];
 let expectedDemoSummary = 'Repo crystal rally source complete';
@@ -34,8 +44,7 @@ function sourcePathFor(reference) {
 }
 
 function staysWithinSourceRoot(filePath) {
-  const relativePath = path.relative(sourceRoot, filePath);
-  return relativePath === '' || (!relativePath.startsWith('..') && !path.isAbsolute(relativePath));
+  return isPathContained(sourceRoot, filePath);
 }
 
 function walkFiles(dir) {
@@ -48,8 +57,8 @@ function walkFiles(dir) {
   });
 }
 
-if (!fs.existsSync(manifestPath)) {
-  failures.push('poe-source/PACKAGE_MANIFEST.json is missing');
+if (!isContainedRegularFile(sourceRoot, manifestPath)) {
+  failures.push('poe-source/PACKAGE_MANIFEST.json must be a contained regular file');
 } else {
   let manifest;
   try {
@@ -70,8 +79,8 @@ if (!fs.existsSync(manifestPath)) {
       }
     });
 
-    if (typeof manifest.generatedAt !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(manifest.generatedAt)) {
-      failures.push('poe-source/PACKAGE_MANIFEST.json must include generatedAt as YYYY-MM-DD');
+    if (!isValidIsoCalendarDate(manifest.generatedAt)) {
+      failures.push('poe-source/PACKAGE_MANIFEST.json must include generatedAt as a valid YYYY-MM-DD calendar date');
     }
 
     if (typeof manifest.expectedDemoSummary !== 'string' || manifest.expectedDemoSummary.trim() === '') {
@@ -95,8 +104,8 @@ if (!fs.existsSync(manifestPath)) {
         failures.push(`manifest file ${file} must stay within poe-source`);
         return;
       }
-      if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
-        failures.push(`manifest lists missing file ${file}`);
+      if (!isContainedRegularFile(sourceRoot, filePath)) {
+        failures.push(`manifest file ${file} must be a contained regular file without symlinks`);
       }
     });
 
@@ -114,8 +123,7 @@ if (!fs.existsSync(manifestPath)) {
         }
         if (
           staysWithinSourceRoot(filePath) &&
-          fs.existsSync(filePath) &&
-          fs.statSync(filePath).isFile() &&
+          isContainedRegularFile(sourceRoot, filePath) &&
           sha256Hex(filePath) !== expectedDigest
         ) {
           failures.push(`manifest digest for ${file} does not match checked-in file contents`);
@@ -143,6 +151,10 @@ if (!fs.existsSync(canonicalPlanPath)) {
   failures.push('docs/plans/2026-06-08-remix-tui-source-proof-baseline.md is missing');
 }
 
+if (!fs.existsSync(ciPlanPath)) {
+  failures.push('docs/plans/2026-06-10-ci-baseline.md is missing');
+}
+
 if (!fs.existsSync(hostedValidationPlanPath)) {
   failures.push('docs/plans/2026-06-10-hosted-proof-validation.md is missing');
 }
@@ -151,26 +163,310 @@ if (!fs.existsSync(hostedValidationWorkflowPath)) {
   failures.push('.github/workflows/check.yml is missing');
 } else {
   const workflow = readText(hostedValidationWorkflowPath);
-  const requiredWorkflowFragments = [
-    'runs-on: ubuntu-24.04',
+  const expectedWorkflow = [
+    'name: Check',
+    '',
+    'on:',
+    '  push:',
+    '  pull_request:',
+    '  workflow_dispatch:',
+    '',
     'permissions:',
-    'contents: read',
-    'node-version: [20, 24]',
-    'uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10',
-    'uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e',
-    'node-version: ${{ matrix.node-version }}',
-    'run: make check',
-  ];
-  requiredWorkflowFragments.forEach((fragment) => {
-    if (!workflow.includes(fragment)) {
-      failures.push(`.github/workflows/check.yml must include ${JSON.stringify(fragment)}`);
+    '  contents: read',
+    '',
+    'concurrency:',
+    '  group: check-${{ github.workflow }}-${{ github.ref }}',
+    '  cancel-in-progress: true',
+    '',
+    'jobs:',
+    '  proof:',
+    '    name: Node ${{ matrix.node-version }}',
+    '    runs-on: ubuntu-24.04',
+    '    timeout-minutes: 5',
+    '    strategy:',
+    '      fail-fast: false',
+    '      matrix:',
+    '        node-version: [20, 24]',
+    '    steps:',
+    '      - name: Check out repository',
+    '        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3',
+    '        with:',
+    '          persist-credentials: false',
+    '',
+    '      - name: Set up Node.js',
+    '        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0',
+    '        with:',
+    '          node-version: ${{ matrix.node-version }}',
+    '',
+    '      - name: Require hosted Chrome',
+    '        run: google-chrome --version',
+    '',
+    '      - name: Validate proof source',
+    '        run: CHROME_BIN=google-chrome make check',
+    '',
+  ].join('\n');
+  if (workflow !== expectedWorkflow) {
+    failures.push('.github/workflows/check.yml must match the reviewed credential-free contract');
+  }
+}
+
+for (const browserPath of [browserSmokePath, browserSmokeTestPath]) {
+  if (!isContainedRegularFile(root, browserPath)) {
+    failures.push(`${rel(browserPath)} must be a contained regular file without symlinks`);
+  }
+}
+
+if (!fs.existsSync(browserIsolationPlanPath)) {
+  failures.push('docs/plans/2026-06-13-browser-smoke-process-isolation.md is missing');
+}
+
+if (!fs.existsSync(responsiveLayoutPlanPath)) {
+  failures.push('docs/plans/2026-06-13-responsive-browser-layout.md is missing');
+}
+
+if (!fs.existsSync(screenshotBaselinePlanPath)) {
+  failures.push('docs/plans/2026-06-13-screenshot-baseline-integrity.md is missing');
+} else {
+  const screenshotBaselinePlan = readText(screenshotBaselinePlanPath);
+  [
+    '`CHROME_BIN=google-chrome make check` passed',
+    'external-directory `make check` passed',
+    'rejected all eight hostile mutations',
+    'Node 20.20.2 and Node 24.16.0',
+    'do not contain Make or Git',
+  ].forEach((evidence) => {
+    if (!screenshotBaselinePlan.includes(evidence)) {
+      failures.push(`screenshot baseline plan must record verification evidence: ${evidence}`);
     }
   });
-  for (const match of workflow.matchAll(/^\s*uses:\s*([^@\s]+)@([^\s#]+)/gm)) {
-    if (!/^[a-f0-9]{40}$/.test(match[2])) {
-      failures.push(`.github/workflows/check.yml action ${match[1]} must be pinned to a full commit SHA`);
-    }
+}
+
+if (fs.existsSync(browserSmokePath)) {
+  const browserSmoke = readText(browserSmokePath);
+  [
+    'const chromeTimeoutMs = 30000;',
+    'function chromeProfilePath(outputRoot, invocation)',
+    '`--user-data-dir=${chromeProfilePath(outputRoot, chromeInvocation++)}`',
+    'const runIsolatedChrome = (args)',
+  ].forEach((fragment) => {
+    if (!browserSmoke.includes(fragment)) failures.push(`browser smoke must preserve process isolation: ${fragment}`);
+  });
+
+  [
+    'const chromeProbeTimeoutMs = 5000;',
+    'const maxChromeCandidates = 5;',
+    'function resolveExecutable(candidate, searchPath = process.env.PATH || \'\')',
+    'function findChrome(candidates = chromeCandidates, probe = childProcess.spawnSync, resolver = resolveExecutable)',
+    'fs.realpathSync(executablePath)',
+    'fs.accessSync(canonicalPath, fs.constants.X_OK)',
+    'timeout: chromeProbeTimeoutMs,',
+    "killSignal: 'SIGKILL',",
+  ].forEach((fragment) => {
+    if (!browserSmoke.includes(fragment)) failures.push(`browser smoke must preserve bounded Chrome discovery: ${fragment}`);
+  });
+}
+
+if (fs.existsSync(browserSmokeTestPath)) {
+  const browserSmokeTest = readText(browserSmokeTestPath);
+  ['chromeProfilePath', "'chrome-profile-0'", 'assert.notStrictEqual'].forEach((fragment) => {
+    if (!browserSmokeTest.includes(fragment)) failures.push(`browser smoke tests must preserve process isolation: ${fragment}`);
+  });
+}
+
+if (fs.existsSync(browserSmokePath)) {
+  const browserSmoke = readText(browserSmokePath);
+  [
+    'function assertScreenshotPair(name, screenshot, blank, expectedViewport)',
+    "for (const [kind, contents] of [['proof', screenshot], ['blank', blank]])",
+    'const dimensions = parsePngDimensions(contents);',
+    'assertScreenshotPair(name, screenshot, blank, viewport);',
+    'screenshotDigest === blankDigest',
+  ].forEach((fragment) => {
+    if (!browserSmoke.includes(fragment)) failures.push(`browser smoke must preserve screenshot baseline integrity: ${fragment}`);
+  });
+}
+
+if (fs.existsSync(browserSmokeTestPath)) {
+  const browserSmokeTest = readText(browserSmokeTestPath);
+  ['assertScreenshotPair', 'blank screenshot dimensions', 'matches a blank page', 'Buffer.alloc(24)'].forEach((fragment) => {
+    if (!browserSmokeTest.includes(fragment)) failures.push(`browser smoke tests must preserve screenshot baseline mutation: ${fragment}`);
+  });
+}
+
+if (fs.existsSync(browserSmokePath)) {
+  const browserSmoke = readText(browserSmokePath);
+  [
+    'assertResponsiveLayout',
+    'button.height < 44',
+    'Browser action buttons overlap',
+    'function browserHarnessUrl(baseUrl, viewport)',
+    'const harnessUrl = browserHarnessUrl(baseUrl, viewport);',
+    "['desktop', 1280, 720]",
+    "['mobile', 390, 844]",
+  ].forEach((fragment) => {
+    if (!browserSmoke.includes(fragment)) failures.push(`browser smoke must preserve responsive layout contract: ${fragment}`);
+  });
+}
+
+if (fs.existsSync(browserSmokeTestPath)) {
+  const browserSmokeTest = readText(browserSmokeTestPath);
+  ['browserHarnessUrl', 'width=390&height=844', 'viewport mismatch', 'below 44', 'overlap', 'visibly rendered'].forEach((fragment) => {
+    if (!browserSmokeTest.includes(fragment)) failures.push(`browser smoke tests must preserve responsive layout mutation: ${fragment}`);
+  });
+
+  [
+    "['stuck-chrome', 'stuck-chrome', 'working-chrome'",
+    "assert.strictEqual(selectedChrome, '/resolved/working-chrome')",
+    'chromeProbeTimeoutMs > 0 && chromeProbeTimeoutMs < 30000',
+    "call.options.killSignal === 'SIGKILL'",
+  ].forEach((fragment) => {
+    if (!browserSmokeTest.includes(fragment)) failures.push(`browser smoke tests must preserve Chrome discovery timeout coverage: ${fragment}`);
+  });
+}
+
+if (fs.existsSync(browserSmokePath)) {
+  const browserSmoke = readText(browserSmokePath);
+  [
+    'const maxBrowserOutputBytes = 1024 * 1024;',
+    'const maxScreenshotBytes = 16 * 1024 * 1024;',
+    "detached: process.platform !== 'win32'",
+    "process.kill(-processHandle.pid, 'SIGKILL')",
+    'function readBoundedRegularFile(filePath, { minimumBytes = 0, maximumBytes })',
+    "if (request.headers.host !== expectedHost)",
+    "if (request.method !== 'GET')",
+    'function assertRequestLog(requestLog)',
+    "'--host-resolver-rules=MAP * 0.0.0.0, EXCLUDE 127.0.0.1'",
+  ].forEach((fragment) => {
+    if (!browserSmoke.includes(fragment)) failures.push(`browser smoke must preserve reviewed ownership bounds: ${fragment}`);
+  });
+}
+
+if (fs.existsSync(browserSmokeTestPath)) {
+  const browserSmokeTest = readText(browserSmokeTestPath);
+  [
+    'maxBrowserOutputBytes + 1',
+    "resolveExecutable('./chrome'",
+    "readBoundedRegularFile(linkedArtifact",
+    "method: 'POST'",
+    "host: `localhost:${port}`",
+    "pathname: '/unexpected.js'",
+    "pathname: '/favicon.ico', status: 204",
+  ].forEach((fragment) => {
+    if (!browserSmokeTest.includes(fragment)) failures.push(`browser smoke tests must preserve hostile ownership coverage: ${fragment}`);
+  });
+}
+
+const makefilePath = path.join(root, 'Makefile');
+if (!fs.existsSync(makefilePath)) {
+  failures.push('Makefile is missing');
+} else {
+  const makefile = readText(makefilePath);
+  if (!makefile.includes('override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))')) {
+    failures.push('Makefile must protect the repository root from command-line overrides');
   }
+  ['scripts/smoke-browser.js', 'scripts/test-browser-smoke.js', '$(MAKE) -f "$(ROOT)/Makefile" browser'].forEach((fragment) => {
+    if (!makefile.includes(fragment)) failures.push(`Makefile must preserve real-browser proof command: ${fragment}`);
+  });
+}
+
+if (fs.existsSync(makeRootOverridePlanPath)) {
+  const makeRootOverridePlan = readText(makeRootOverridePlanPath);
+  ['Node 20', 'Node 24', 'ROOT=/tmp', 'hostile mutations rejected'].forEach((evidence) => {
+    if (!makeRootOverridePlan.includes(evidence)) {
+      failures.push(`${rel(makeRootOverridePlanPath)} must preserve completed evidence: ${evidence}`);
+    }
+  });
+} else {
+  failures.push(`${rel(makeRootOverridePlanPath)} is missing`);
+}
+
+if (fs.existsSync(chromeDiscoveryTimeoutPlanPath)) {
+  const chromeDiscoveryTimeoutPlan = readText(chromeDiscoveryTimeoutPlanPath);
+  if (!/^## Status: Completed$/mu.test(chromeDiscoveryTimeoutPlan)) {
+    failures.push(`${rel(chromeDiscoveryTimeoutPlanPath)} must record completed status`);
+  }
+  ['5-second', 'SIGKILL', 'hostile mutations', 'make check', 'Exact diff'].forEach((evidence) => {
+    if (!chromeDiscoveryTimeoutPlan.includes(evidence)) {
+      failures.push(`${rel(chromeDiscoveryTimeoutPlanPath)} must preserve completed evidence: ${evidence}`);
+    }
+  });
+} else {
+  failures.push(`${rel(chromeDiscoveryTimeoutPlanPath)} is missing`);
+}
+
+for (const relativePath of ['README.md', 'CHANGES.md']) {
+  const docsPath = path.join(root, relativePath);
+  if (!fs.existsSync(docsPath) || !readText(docsPath).includes('5-second Chrome discovery')) {
+    failures.push(`${relativePath} must document the 5-second Chrome discovery bound`);
+  }
+}
+
+['README.md', 'VISION.md', 'SECURITY.md', 'CHANGES.md'].forEach((relativePath) => {
+  const docsPath = path.join(root, relativePath);
+  if (!fs.existsSync(docsPath) || !readText(docsPath).includes('GitHub Actions')) {
+    failures.push(`${relativePath} must document the GitHub Actions baseline`);
+  }
+});
+
+['README.md', 'VISION.md', 'SECURITY.md', 'CHANGES.md'].forEach((relativePath) => {
+  const docsPath = path.join(root, relativePath);
+  const contents = fs.existsSync(docsPath) ? readText(docsPath) : '';
+  if (!contents.includes('isolated Chrome profiles') || !contents.includes('30-second')) {
+    failures.push(`${relativePath} must document isolated Chrome profiles and the 30-second bound`);
+  }
+});
+
+['README.md', 'VISION.md', 'SECURITY.md', 'CHANGES.md'].forEach((relativePath) => {
+  const docsPath = path.join(root, relativePath);
+  if (!fs.existsSync(docsPath) || !readText(docsPath).toLowerCase().includes('real-browser')) {
+    failures.push(`${relativePath} must document the real-browser proof smoke`);
+  }
+});
+
+['make check', 'poe-source', 'secrets'].forEach((guidance) => {
+  const agentsPath = path.join(root, 'AGENTS.md');
+  if (!fs.existsSync(agentsPath) || !readText(agentsPath).includes(guidance)) {
+    failures.push(`AGENTS.md must preserve contributor guidance: ${guidance}`);
+  }
+});
+
+const gitignorePath = path.join(root, '.gitignore');
+const requiredIgnoreEntries = [
+  '.env',
+  '.env.*',
+  '!.env.example',
+  '.DS_Store',
+  '.idea/',
+  '.vscode/',
+  '*.iml',
+  'node_modules/',
+  'dist/',
+];
+if (!fs.existsSync(gitignorePath)) {
+  failures.push('.gitignore is missing');
+} else {
+  const ignoredEntries = new Set(readText(gitignorePath).split(/\r?\n/));
+  requiredIgnoreEntries.forEach((entry) => {
+    if (!ignoredEntries.has(entry)) {
+      failures.push(`.gitignore must include ${JSON.stringify(entry)}`);
+    }
+  });
+}
+
+try {
+  const trackedLocalMetadata = execFileSync(
+    'git',
+    ['ls-files', '.env', '.env.*', '.idea/**', '.vscode/**', '*.iml'],
+    { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
+  )
+    .split(/\r?\n/)
+    .filter((entry) => entry && entry !== '.env.example')
+    .join('\n');
+  if (trackedLocalMetadata) {
+    failures.push(`local secrets or editor metadata must not be tracked: ${trackedLocalMetadata}`);
+  }
+} catch (error) {
+  failures.push('proof validation must be able to inspect tracked secret and editor metadata paths');
 }
 
 if (!fs.existsSync(plansRoot)) {
@@ -187,7 +483,9 @@ if (!fs.existsSync(plansRoot)) {
 
   docsPlans.forEach((planPath) => {
     const plan = readText(planPath);
-    if (!plan.includes('Status: Completed') || !plan.includes('make check')) {
+    const statusLines = plan.split(/\r?\n/).filter((line) => /^(?:## )?Status:/.test(line));
+    const completedStatus = statusLines.filter((line) => line === 'Status: Completed' || line === '## Status: Completed');
+    if (statusLines.length !== 1 || completedStatus.length !== 1 || !plan.includes('make check')) {
       failures.push(`${rel(planPath)} must record completed status and make check verification`);
     }
   });
@@ -195,8 +493,8 @@ if (!fs.existsSync(plansRoot)) {
 
 const htmlPath = path.join(sourceRoot, 'index.html');
 const cssPath = path.join(sourceRoot, 'assets', 'styles.css');
-if (!fs.existsSync(htmlPath)) {
-  failures.push('poe-source/index.html is missing');
+if (!isContainedRegularFile(sourceRoot, htmlPath)) {
+  failures.push('poe-source/index.html must be a contained regular file without symlinks');
 } else {
   const html = readText(htmlPath);
   if (!/^<!doctype html>/i.test(html.trim())) {
@@ -242,8 +540,8 @@ if (!fs.existsSync(htmlPath)) {
       failures.push(`poe-source/index.html local asset ${reference} must stay within poe-source`);
       continue;
     }
-    if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
-      failures.push(`poe-source/index.html references missing asset ${reference}`);
+    if (!isContainedRegularFile(sourceRoot, filePath)) {
+      failures.push(`poe-source/index.html asset ${reference} must be a contained regular file without symlinks`);
     }
   }
   if (!linkedFiles.includes('./game.js')) {
@@ -264,8 +562,8 @@ if (!fs.existsSync(htmlPath)) {
   });
 }
 
-if (!fs.existsSync(cssPath)) {
-  failures.push('poe-source/assets/styles.css is missing');
+if (!isContainedRegularFile(sourceRoot, cssPath)) {
+  failures.push('poe-source/assets/styles.css must be a contained regular file without symlinks');
 } else {
   const css = readText(cssPath);
   const buttonFocusVisibleMatch = css.match(/button:focus-visible\s*\{([^}]*)\}/i);
@@ -283,8 +581,8 @@ if (!fs.existsSync(cssPath)) {
 }
 
 const gamePath = path.join(sourceRoot, 'game.js');
-if (!fs.existsSync(gamePath)) {
-  failures.push('poe-source/game.js is missing');
+if (!isContainedRegularFile(sourceRoot, gamePath)) {
+  failures.push('poe-source/game.js must be a contained regular file without symlinks');
 } else {
   const sandbox = { globalThis: {} };
   try {

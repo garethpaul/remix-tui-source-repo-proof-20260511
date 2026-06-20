@@ -29,9 +29,27 @@ Helpful reports include:
 - Proof manifest entries and HTML asset references should remain contained
   within `poe-source`; parent-directory escapes or absolute proof paths should
   be treated as suspicious.
+- Proof source paths must resolve to regular non-symlink files within the real
+  source root so lexical containment cannot be bypassed through links.
 - No primary dependency manifest was detected in the repository root. If dependencies are added later, include a manifest and prefer reproducible installation instructions.
-- The hosted source proof check installs no project dependencies, grants only
-  read access to repository contents, and pins third-party actions by commit.
+- The proof baseline fails closed if it cannot inspect tracked local secret and
+  editor metadata paths, and rejects those files when tracked.
+- The GitHub Actions source proof check installs no project dependencies,
+  grants only read access to repository contents, and pins third-party actions
+  by commit. Checkout credential persistence is disabled, and the workflow
+  never receives repository secrets.
+- The hosted gate requires a real-browser Chrome smoke that serves only on
+  loopback, clicks both proof controls, and compares desktop/mobile screenshots
+  against blank pages without contacting external origins. Both sides of each
+  comparison must have recognized PNG/IHDR headers and exact viewport
+  dimensions before digest comparison.
+- The loopback server accepts only its exact ephemeral `127.0.0.1:<port>` Host,
+  `GET`, and manifest-listed regular files. Source responses, browser output,
+  and screenshot artifacts have explicit byte limits; screenshot paths may not
+  be symlinks.
+- Each launch uses isolated Chrome profiles and a bounded 30-second timeout so
+  a prior process cannot retain the next process's profile lock. Completed
+  artifacts terminate the Chrome process group when background helpers linger.
 - Demo action status lookups accept only checked-in own properties; inherited
   object property names must fall back to the documented proof summary.
 

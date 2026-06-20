@@ -21,7 +21,8 @@ directory was the repository root.
 
 - Added `.github/workflows/check.yml` with a fixed Ubuntu 24.04 runner and a
   Node.js 20/24 matrix.
-- Pinned checkout and Node setup actions to reviewed immutable commits.
+- Pinned checkout and Node setup actions to reviewed immutable commits and
+  disabled persisted checkout credentials.
 - Made Makefile script paths resolve relative to the Makefile itself.
 - Extended the source proof checker to fail closed when the hosted validation
   plan or required workflow controls are removed.

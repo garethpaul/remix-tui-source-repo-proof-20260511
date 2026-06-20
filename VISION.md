@@ -21,6 +21,8 @@ Priority:
 - Keep proof file digests aligned with checked-in source contents
 - Keep browser execution constrained to local scripts and styles
 - Keep manifest and HTML asset paths contained within `poe-source`
+- Keep proof files regular and non-symlinked under the real source root
+- Keep manifest provenance dates valid and canonical
 - Keep visible proof status text exposed as a polite live region
 - Keep proof status announcements atomic for assistive technology
 - Keep proof demo action buttons explicit non-submit controls
@@ -31,7 +33,18 @@ Priority:
 - Keep proof demo action status lookup restricted to checked-in own properties
 - Keep completed maintenance plans under `docs/plans`
 - Keep the dependency-free proof contract running on supported Node.js lines
-  in hosted validation
+  in credential-free GitHub Actions validation
+- Keep a dependency-free real-browser interaction and screenshot smoke
+- Keep desktop/mobile status and action controls visible, non-overlapping, and
+  at least 44 pixels tall in the real-browser smoke
+- Keep browser launches on isolated Chrome profiles with a bounded 30-second
+  timeout, canonical executable provenance, bounded output, and process-group
+  cleanup after completed proof artifacts
+- Keep the browser server restricted to its exact ephemeral IPv4 loopback Host,
+  `GET`, manifest-listed regular files, and deterministic successful requests
+- Keep proof and blank screenshot baselines recognizable by their PNG/IHDR
+  headers and matched to their declared viewports before comparison
+- Keep local secrets and editor metadata out of the checked-in proof artifact
 - Avoid adding runtime dependencies without a manifest update
 
 Next priorities:
@@ -46,6 +59,8 @@ Contribution rules:
 - Keep generated artifacts reproducible.
 - Do not mix proof updates with unrelated feature work.
 - Preserve file paths expected by the manifest.
+- Keep `.github/workflows/check.yml` aligned with the dependency-free source
+  proof validator.
 
 ## Security And Responsible Use
 
