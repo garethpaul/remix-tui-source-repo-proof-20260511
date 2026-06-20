@@ -1,5 +1,35 @@
 # Browser Source Proof Deep Review Implementation Plan
 
+## Status: Completed
+
+## Review Evidence
+
+- Root cause: commit `785d3e8` introduced the real-browser server, discovery,
+  and child-process wait. The implementation trusted unresolved executable
+  names, served any lexically contained readable path, accumulated unbounded
+  output, and required Chrome to exit after producing proof artifacts. Commit
+  `1e9150d` added screenshot comparison without byte or output-file type bounds;
+  commit `cf550b9` bounded each probe but carried unresolved executable
+  provenance forward. Confidence: clear from bounded `git log -S` history.
+- Local Node `v25.8.1` syntax checks, proof checker, file contracts, browser
+  contracts, `git diff --check`, root `make check`, and `/` caller-independent
+  `make check ROOT=/tmp` passed.
+- Google Chrome `149.0.7827.116` passed desktop and mobile real-browser proof
+  interaction, exact request auditing, nonblank screenshots, and process-group
+  completion cleanup. The in-app browser independently clicked both actions,
+  reported no warning/error console logs, and measured the 390x844 layout with
+  both controls at 44 pixels tall and inside the viewport.
+- Ten hostile mutations were rejected: candidate count, canonical executable
+  return, Host enforcement, GET enforcement, screenshot byte maximum,
+  completion cleanup, unexpected requests, resource mapping, process-group
+  cleanup policy, and artifact symlink rejection.
+- Redacted Gitleaks and current-tree/full-history credential scans found zero
+  findings. GitHub CodeQL, secret-scanning, and Dependabot open-alert counts
+  were zero. The repository contains no dependency manifest to audit.
+- `actions/checkout@v6.0.3` and `actions/setup-node@v6.4.0` commit pins were
+  verified against their official Git tags. Hosted Chrome remains runner-owned
+  and observed in logs rather than hermetically version-pinned.
+
 > **For Claude:** REQUIRED SUB-SKILL: Use executing-plans to implement this plan task-by-task.
 
 **Goal:** Consolidate PRs #1-#6 while hardening the dependency-free browser/source-proof boundary against unsafe browser discovery, local-server path confusion, unbounded artifacts, hidden browser failures, and incomplete cleanup.

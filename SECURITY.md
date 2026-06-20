@@ -43,8 +43,13 @@ Helpful reports include:
   against blank pages without contacting external origins. Both sides of each
   comparison must have recognized PNG/IHDR headers and exact viewport
   dimensions before digest comparison.
+- The loopback server accepts only its exact ephemeral `127.0.0.1:<port>` Host,
+  `GET`, and manifest-listed regular files. Source responses, browser output,
+  and screenshot artifacts have explicit byte limits; screenshot paths may not
+  be symlinks.
 - Each launch uses isolated Chrome profiles and a bounded 30-second timeout so
-  a prior process cannot retain the next process's profile lock.
+  a prior process cannot retain the next process's profile lock. Completed
+  artifacts terminate the Chrome process group when background helpers linger.
 - Demo action status lookups accept only checked-in own properties; inherited
   object property names must fall back to the documented proof summary.
 

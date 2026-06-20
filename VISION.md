@@ -38,7 +38,10 @@ Priority:
 - Keep desktop/mobile status and action controls visible, non-overlapping, and
   at least 44 pixels tall in the real-browser smoke
 - Keep browser launches on isolated Chrome profiles with a bounded 30-second
-  timeout
+  timeout, canonical executable provenance, bounded output, and process-group
+  cleanup after completed proof artifacts
+- Keep the browser server restricted to its exact ephemeral IPv4 loopback Host,
+  `GET`, manifest-listed regular files, and deterministic successful requests
 - Keep proof and blank screenshot baselines recognizable by their PNG/IHDR
   headers and matched to their declared viewports before comparison
 - Keep local secrets and editor metadata out of the checked-in proof artifact

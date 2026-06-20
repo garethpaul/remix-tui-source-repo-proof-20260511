@@ -254,7 +254,11 @@ if (fs.existsSync(browserSmokePath)) {
 
   [
     'const chromeProbeTimeoutMs = 5000;',
-    'function findChrome(candidates = chromeCandidates, probe = childProcess.spawnSync)',
+    'const maxChromeCandidates = 5;',
+    'function resolveExecutable(candidate, searchPath = process.env.PATH || \'\')',
+    'function findChrome(candidates = chromeCandidates, probe = childProcess.spawnSync, resolver = resolveExecutable)',
+    'fs.realpathSync(executablePath)',
+    'fs.accessSync(canonicalPath, fs.constants.X_OK)',
     'timeout: chromeProbeTimeoutMs,',
     "killSignal: 'SIGKILL',",
   ].forEach((fragment) => {
@@ -311,12 +315,44 @@ if (fs.existsSync(browserSmokeTestPath)) {
   });
 
   [
-    "findChrome(['stuck-chrome', 'working-chrome']",
-    "assert.strictEqual(selectedChrome, 'working-chrome')",
+    "['stuck-chrome', 'stuck-chrome', 'working-chrome'",
+    "assert.strictEqual(selectedChrome, '/resolved/working-chrome')",
     'chromeProbeTimeoutMs > 0 && chromeProbeTimeoutMs < 30000',
-    "killSignal: 'SIGKILL'",
+    "call.options.killSignal === 'SIGKILL'",
   ].forEach((fragment) => {
     if (!browserSmokeTest.includes(fragment)) failures.push(`browser smoke tests must preserve Chrome discovery timeout coverage: ${fragment}`);
+  });
+}
+
+if (fs.existsSync(browserSmokePath)) {
+  const browserSmoke = readText(browserSmokePath);
+  [
+    'const maxBrowserOutputBytes = 1024 * 1024;',
+    'const maxScreenshotBytes = 16 * 1024 * 1024;',
+    "detached: process.platform !== 'win32'",
+    "process.kill(-processHandle.pid, 'SIGKILL')",
+    'function readBoundedRegularFile(filePath, { minimumBytes = 0, maximumBytes })',
+    "if (request.headers.host !== expectedHost)",
+    "if (request.method !== 'GET')",
+    'function assertRequestLog(requestLog)',
+    "'--host-resolver-rules=MAP * 0.0.0.0, EXCLUDE 127.0.0.1'",
+  ].forEach((fragment) => {
+    if (!browserSmoke.includes(fragment)) failures.push(`browser smoke must preserve reviewed ownership bounds: ${fragment}`);
+  });
+}
+
+if (fs.existsSync(browserSmokeTestPath)) {
+  const browserSmokeTest = readText(browserSmokeTestPath);
+  [
+    'maxBrowserOutputBytes + 1',
+    "resolveExecutable('./chrome'",
+    "readBoundedRegularFile(linkedArtifact",
+    "method: 'POST'",
+    "host: `localhost:${port}`",
+    "pathname: '/unexpected.js'",
+    "pathname: '/favicon.ico', status: 204",
+  ].forEach((fragment) => {
+    if (!browserSmokeTest.includes(fragment)) failures.push(`browser smoke tests must preserve hostile ownership coverage: ${fragment}`);
   });
 }
 

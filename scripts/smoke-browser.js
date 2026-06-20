@@ -7,11 +7,16 @@ const fs = require('fs');
 const http = require('http');
 const os = require('os');
 const path = require('path');
+const { isContainedRegularFile } = require('./proof-file-contract');
 
 const root = path.resolve(__dirname, '..');
 const sourceRoot = path.join(root, 'poe-source');
 const chromeProbeTimeoutMs = 5000;
 const chromeTimeoutMs = 30000;
+const maxBrowserOutputBytes = 1024 * 1024;
+const maxChromeCandidates = 5;
+const maxScreenshotBytes = 16 * 1024 * 1024;
+const maxSourceBytes = 1024 * 1024;
 const chromeCandidates = [
   process.env.CHROME_BIN,
   'google-chrome',
@@ -84,6 +89,9 @@ const harnessScript = `(() => {
         initial,
         charged,
         released,
+        resources: frame.contentWindow.performance.getEntriesByType('resource')
+          .map((entry) => new URL(entry.name).pathname)
+          .sort(),
         viewport: { width: frame.contentWindow.innerWidth, height: frame.contentWindow.innerHeight },
         status: geometry(status),
         buttons: Array.from(buttons, geometry),
@@ -103,56 +111,134 @@ function send(response, status, contentType, body) {
   response.end(body);
 }
 
+function readBoundedRegularFile(filePath, { minimumBytes = 0, maximumBytes }) {
+  const stat = fs.lstatSync(filePath);
+  if (stat.isSymbolicLink()) throw new Error(`${filePath} must not be a symlink`);
+  if (!stat.isFile()) throw new Error(`${filePath} must be a regular file`);
+  if (stat.size < minimumBytes) throw new Error(`${filePath} is below the ${minimumBytes}-byte minimum`);
+  if (stat.size > maximumBytes) throw new Error(`${filePath} exceeds the ${maximumBytes}-byte limit`);
+
+  const flags = fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0);
+  const descriptor = fs.openSync(filePath, flags);
+  try {
+    const openedStat = fs.fstatSync(descriptor);
+    if (!openedStat.isFile() || openedStat.size !== stat.size) throw new Error(`${filePath} changed while opening`);
+    const contents = Buffer.alloc(openedStat.size);
+    let offset = 0;
+    while (offset < contents.length) {
+      const bytesRead = fs.readSync(descriptor, contents, offset, contents.length - offset, offset);
+      if (bytesRead === 0) throw new Error(`${filePath} changed while reading`);
+      offset += bytesRead;
+    }
+    return contents;
+  } finally {
+    fs.closeSync(descriptor);
+  }
+}
+
+function loadSourceAllowlist() {
+  const manifestPath = path.join(sourceRoot, 'PACKAGE_MANIFEST.json');
+  if (!isContainedRegularFile(sourceRoot, manifestPath)) throw new Error('Proof manifest is not a contained regular file');
+  const manifest = JSON.parse(readBoundedRegularFile(manifestPath, { maximumBytes: maxSourceBytes }).toString('utf8'));
+  if (!Array.isArray(manifest.files)) throw new Error('Proof manifest files are missing');
+  return new Map(manifest.files
+    .filter((reference) => reference !== 'PACKAGE_MANIFEST.json')
+    .map((reference) => [`/${reference.replaceAll(path.sep, '/')}`, path.resolve(sourceRoot, reference)]));
+}
+
 function createServer() {
-  return http.createServer((request, response) => {
+  const allowedFiles = loadSourceAllowlist();
+  const server = http.createServer((request, response) => {
     let requestUrl;
     let pathname;
+    const respond = (status, contentType, body) => {
+      server.requestLog.push({ method: request.method || '', pathname: pathname || request.url || '', status });
+      return send(response, status, contentType, body);
+    };
     try {
       requestUrl = new URL(request.url || '/', 'http://127.0.0.1');
       pathname = decodeURIComponent(requestUrl.pathname);
     } catch (error) {
-      send(response, 400, 'text/plain; charset=utf-8', 'Bad request');
-      return;
+      return respond(400, 'text/plain; charset=utf-8', 'Bad request');
     }
+
+    const address = server.address();
+    const expectedHost = address && typeof address === 'object' ? `127.0.0.1:${address.port}` : '';
+    if (request.headers.host !== expectedHost) return respond(403, 'text/plain; charset=utf-8', 'Forbidden');
+    if (request.method !== 'GET') return respond(405, 'text/plain; charset=utf-8', 'Method not allowed');
 
     if (pathname === '/__smoke__.html') {
       const width = Number(requestUrl.searchParams.get('width'));
       const height = Number(requestUrl.searchParams.get('height'));
       if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0 || width > 4096 || height > 4096) {
-        return send(response, 400, 'text/plain; charset=utf-8', 'Invalid viewport');
+        return respond(400, 'text/plain; charset=utf-8', 'Invalid viewport');
       }
-      return send(response, 200, contentTypes.get('.html'), renderHarnessHtml(width, height));
+      return respond(200, contentTypes.get('.html'), renderHarnessHtml(width, height));
     }
-    if (pathname === '/__smoke__.js') return send(response, 200, contentTypes.get('.js'), harnessScript);
-    if (pathname === '/__blank.html') return send(response, 200, contentTypes.get('.html'), blankHtml);
+    if (pathname === '/__smoke__.js') return respond(200, contentTypes.get('.js'), harnessScript);
+    if (pathname === '/__blank.html') return respond(200, contentTypes.get('.html'), blankHtml);
+    if (pathname === '/favicon.ico') return respond(204, 'image/x-icon', '');
 
-    const relativePath = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
-    const filePath = path.resolve(sourceRoot, relativePath);
-    if (filePath !== sourceRoot && !filePath.startsWith(`${sourceRoot}${path.sep}`)) {
-      send(response, 403, 'text/plain; charset=utf-8', 'Forbidden');
-      return;
+    const sourcePath = pathname === '/' ? '/index.html' : pathname;
+    const filePath = allowedFiles.get(sourcePath);
+    if (!filePath || !isContainedRegularFile(sourceRoot, filePath)) {
+      return respond(404, 'text/plain; charset=utf-8', 'Not found');
     }
-
-    fs.readFile(filePath, (error, contents) => {
-      if (error) {
-        send(response, error.code === 'ENOENT' ? 404 : 500, 'text/plain; charset=utf-8', error.code || 'Read error');
-        return;
-      }
-      send(response, 200, contentTypes.get(path.extname(filePath)) || 'application/octet-stream', contents);
-    });
+    try {
+      const contents = readBoundedRegularFile(filePath, { maximumBytes: maxSourceBytes });
+      return respond(200, contentTypes.get(path.extname(filePath)) || 'application/octet-stream', contents);
+    } catch (error) {
+      return respond(500, 'text/plain; charset=utf-8', 'Read error');
+    }
   });
+  server.requestLog = [];
+  return server;
 }
 
-function findChrome(candidates = chromeCandidates, probe = childProcess.spawnSync) {
-  for (const candidate of candidates) {
-    const result = probe(candidate, ['--version'], {
+function resolveExecutable(candidate, searchPath = process.env.PATH || '') {
+  if (typeof candidate !== 'string' || candidate.length === 0 || candidate.includes('\0')) {
+    throw new Error('Chrome candidate must be a non-empty path');
+  }
+  let candidates;
+  if (path.isAbsolute(candidate)) {
+    candidates = [candidate];
+  } else {
+    if (candidate.includes('/') || candidate.includes('\\')) throw new Error('Chrome candidate paths must be absolute');
+    candidates = searchPath.split(path.delimiter)
+      .filter((directory) => directory && path.isAbsolute(directory))
+      .map((directory) => path.join(directory, candidate));
+  }
+
+  for (const executablePath of candidates) {
+    try {
+      const canonicalPath = fs.realpathSync(executablePath);
+      if (!fs.statSync(canonicalPath).isFile()) continue;
+      fs.accessSync(canonicalPath, fs.constants.X_OK);
+      return canonicalPath;
+    } catch (error) {
+      continue;
+    }
+  }
+  throw new Error(`Chrome candidate is not an executable regular file: ${candidate}`);
+}
+
+function findChrome(candidates = chromeCandidates, probe = childProcess.spawnSync, resolver = resolveExecutable) {
+  const uniqueCandidates = [...new Set(candidates)].slice(0, maxChromeCandidates);
+  for (const candidate of uniqueCandidates) {
+    let executablePath;
+    try {
+      executablePath = resolver(candidate);
+    } catch (error) {
+      continue;
+    }
+    const result = probe(executablePath, ['--version'], {
       encoding: 'utf8',
       timeout: chromeProbeTimeoutMs,
       killSignal: 'SIGKILL',
     });
-    if (!result.error && result.status === 0) return candidate;
+    if (!result.error && result.status === 0) return executablePath;
   }
-  throw new Error(`Chrome or Chromium is required; checked: ${candidates.join(', ')}`);
+  throw new Error(`Chrome or Chromium is required; checked: ${uniqueCandidates.join(', ')}`);
 }
 
 function chromeProfilePath(outputRoot, invocation) {
@@ -166,37 +252,89 @@ function browserHarnessUrl(baseUrl, viewport) {
   return url.toString();
 }
 
-function runChrome(chrome, args) {
+function runChrome(chrome, args, spawn = childProcess.spawn, options = {}) {
   return new Promise((resolve, reject) => {
-    const processHandle = childProcess.spawn(chrome, [
+    const timeoutMs = options.timeoutMs || chromeTimeoutMs;
+    const processHandle = spawn(chrome, [
       '--headless',
       '--disable-background-networking',
+      '--disable-component-update',
       '--disable-default-apps',
       '--disable-dev-shm-usage',
+      '--disable-domain-reliability',
       '--disable-gpu',
       '--disable-sync',
+      '--host-resolver-rules=MAP * 0.0.0.0, EXCLUDE 127.0.0.1',
       '--metrics-recording-only',
       '--no-first-run',
       '--no-sandbox',
       ...args,
-    ]);
+    ], {
+      detached: process.platform !== 'win32',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
     let stdout = '';
     let stderr = '';
-    let timedOut = false;
+    let completionDetected = false;
+    let failure;
+    let settled = false;
+    const terminate = () => {
+      if (process.platform !== 'win32' && Number.isInteger(processHandle.pid)) {
+        try {
+          process.kill(-processHandle.pid, 'SIGKILL');
+          return;
+        } catch (error) {
+        }
+      }
+      try {
+        processHandle.kill('SIGKILL');
+      } catch (error) {
+      }
+    };
+    const finish = (callback) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      callback();
+    };
+    const append = (current, chunk) => {
+      if (Buffer.byteLength(current) + Buffer.byteLength(chunk) > maxBrowserOutputBytes) {
+        failure = new Error(`Chrome output exceeds the ${maxBrowserOutputBytes}-byte output limit`);
+        terminate();
+        return current;
+      }
+      return current + chunk;
+    };
+    const detectCompletion = () => {
+      if (completionDetected || failure) return;
+      const dumpedDom = args.includes('--dump-dom') && stdout.includes('</html>');
+      const wroteScreenshot = args.some((argument) => argument.startsWith('--screenshot=')) && /bytes written to file/u.test(stderr);
+      if (dumpedDom || wroteScreenshot) {
+        completionDetected = true;
+        terminate();
+      }
+    };
     const timeout = setTimeout(() => {
-      timedOut = true;
-      processHandle.kill('SIGKILL');
-    }, chromeTimeoutMs);
+      failure = new Error(`Chrome timed out after ${timeoutMs}ms: ${stderr.trim().slice(0, 512)}`);
+      terminate();
+    }, timeoutMs);
     processHandle.stdout.setEncoding('utf8');
     processHandle.stderr.setEncoding('utf8');
-    processHandle.stdout.on('data', (chunk) => { stdout += chunk; });
-    processHandle.stderr.on('data', (chunk) => { stderr += chunk; });
-    processHandle.on('error', reject);
+    processHandle.stdout.on('data', (chunk) => {
+      stdout = append(stdout, chunk);
+      detectCompletion();
+    });
+    processHandle.stderr.on('data', (chunk) => {
+      stderr = append(stderr, chunk);
+      detectCompletion();
+    });
+    processHandle.on('error', (error) => finish(() => reject(error)));
     processHandle.on('close', (status, signal) => {
-      clearTimeout(timeout);
-      if (timedOut) reject(new Error(`Chrome timed out after ${chromeTimeoutMs}ms`));
-      else if (status !== 0) reject(new Error(`Chrome exited with ${signal || `status ${status}`}: ${stderr.trim()}`));
-      else resolve(stdout);
+      finish(() => {
+        if (failure) reject(failure);
+        else if (completionDetected || status === 0) resolve(stdout);
+        else reject(new Error(`Chrome exited with ${signal || `status ${status}`}: ${stderr.trim().slice(0, 2048)}`));
+      });
     });
   });
 }
@@ -206,11 +344,18 @@ function parsePngDimensions(contents) {
   if (contents.length < 24 || !contents.subarray(0, 8).equals(signature) || contents.toString('ascii', 12, 16) !== 'IHDR') {
     throw new Error('Screenshot is not a valid PNG with an IHDR header');
   }
-  return { width: contents.readUInt32BE(16), height: contents.readUInt32BE(20) };
+  const dimensions = { width: contents.readUInt32BE(16), height: contents.readUInt32BE(20) };
+  if (dimensions.width === 0 || dimensions.height === 0 || dimensions.width > 4096 || dimensions.height > 4096) {
+    throw new Error(`Screenshot dimensions are invalid: ${dimensions.width}x${dimensions.height}`);
+  }
+  return dimensions;
 }
 
 function assertScreenshotPair(name, screenshot, blank, expectedViewport) {
   for (const [kind, contents] of [['proof', screenshot], ['blank', blank]]) {
+    if (contents.length < 64 || contents.length > maxScreenshotBytes) {
+      throw new Error(`${name} ${kind} screenshot violates the 64-${maxScreenshotBytes} byte limit`);
+    }
     const dimensions = parsePngDimensions(contents);
     if (dimensions.width !== expectedViewport.width || dimensions.height !== expectedViewport.height) {
       throw new Error(
@@ -289,7 +434,36 @@ function assertInteractionDom(dom, expectedViewport) {
   if (JSON.stringify(expectedInteraction) !== JSON.stringify(expected)) {
     throw new Error(`Browser interaction result mismatch: ${JSON.stringify(result)}`);
   }
+  if (JSON.stringify(result.resources) !== JSON.stringify(['/assets/styles.css', '/game.js'])) {
+    throw new Error(`Browser resource mapping mismatch: ${JSON.stringify(result.resources)}`);
+  }
   assertResponsiveLayout(result, expectedViewport);
+}
+
+function assertRequestLog(requestLog) {
+  const allowedPaths = new Set([
+    '/__blank.html',
+    '/__smoke__.html',
+    '/__smoke__.js',
+    '/assets/styles.css',
+    '/game.js',
+    '/index.html',
+  ]);
+  const requiredPaths = new Set(allowedPaths);
+  for (const request of requestLog) {
+    const optionalFavicon = request.pathname === '/favicon.ico' && request.status === 204;
+    if (request.method !== 'GET' || (request.status !== 200 && !optionalFavicon)) {
+      throw new Error(`Browser navigation recorded a non-success request: ${JSON.stringify(request)}`);
+    }
+    if (optionalFavicon) continue;
+    if (!allowedPaths.has(request.pathname)) {
+      throw new Error(`Browser navigation recorded an unexpected request: ${request.pathname}`);
+    }
+    requiredPaths.delete(request.pathname);
+  }
+  if (requiredPaths.size > 0) {
+    throw new Error(`Browser navigation is missing required requests: ${[...requiredPaths].join(', ')}`);
+  }
 }
 
 async function listen(server) {
@@ -324,10 +498,11 @@ async function main() {
       const blankPath = path.join(outputRoot, `${name}-blank.png`);
       await runIsolatedChrome([`--window-size=${width},${height}`, `--screenshot=${screenshotPath}`, `${baseUrl}/index.html`]);
       await runIsolatedChrome([`--window-size=${width},${height}`, `--screenshot=${blankPath}`, `${baseUrl}/__blank.html`]);
-      const screenshot = fs.readFileSync(screenshotPath);
-      const blank = fs.readFileSync(blankPath);
+      const screenshot = readBoundedRegularFile(screenshotPath, { minimumBytes: 64, maximumBytes: maxScreenshotBytes });
+      const blank = readBoundedRegularFile(blankPath, { minimumBytes: 64, maximumBytes: maxScreenshotBytes });
       assertScreenshotPair(name, screenshot, blank, viewport);
     }
+    assertRequestLog(server.requestLog);
     process.stdout.write('Real-browser proof smoke passed for both actions, responsive layout, and desktop/mobile screenshots.\n');
   } finally {
     await close(server).catch(() => {});
@@ -344,11 +519,21 @@ if (require.main === module) {
 
 module.exports = {
   assertInteractionDom,
+  assertRequestLog,
   assertResponsiveLayout,
   assertScreenshotPair,
   browserHarnessUrl,
   chromeProbeTimeoutMs,
   chromeProfilePath,
+  close,
+  createServer,
   findChrome,
+  listen,
+  maxBrowserOutputBytes,
+  maxChromeCandidates,
+  maxScreenshotBytes,
   parsePngDimensions,
+  readBoundedRegularFile,
+  resolveExecutable,
+  runChrome,
 };

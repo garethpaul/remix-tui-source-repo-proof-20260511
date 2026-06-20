@@ -1,5 +1,16 @@
 # Changes
 
+## 2026-06-19
+
+- Resolved Chrome candidates to canonical executable files, deduplicated and
+  bounded discovery, and rejected unsafe relative browser paths.
+- Made valid DOM and screenshot completion terminate lingering Chrome process
+  groups while bounding browser output and preserving the 30-second timeout.
+- Restricted the ephemeral proof server to its exact IPv4 loopback Host,
+  `GET`, manifest-listed regular files, and bounded source responses.
+- Added deterministic request auditing, optional empty favicon handling,
+  bounded non-symlink screenshot reads, and exact source-resource mapping.
+
 ## 2026-06-17
 
 - Added a 5-second Chrome discovery timeout with `SIGKILL` and deterministic
