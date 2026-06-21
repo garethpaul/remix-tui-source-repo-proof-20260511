@@ -361,11 +361,39 @@ if (!fs.existsSync(makefilePath)) {
   failures.push('Makefile is missing');
 } else {
   const makefile = readText(makefilePath);
-  if (!makefile.includes('override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))')) {
-    failures.push('Makefile must protect the repository root from command-line overrides');
-  }
-  ['scripts/smoke-browser.js', 'scripts/test-browser-smoke.js', '$(MAKE) -f "$(ROOT)/Makefile" browser'].forEach((fragment) => {
+  [
+    'override SHELL := /bin/sh',
+    'override .SHELLFLAGS := -c',
+    'ifneq ($(strip $(MAKEFILES)),)',
+    '$(error MAKEFILES must be empty; repository verification requires this Makefile to be loaded alone)',
+    'ifneq ($(origin MAKEFILE_LIST),file)',
+    '$(error MAKEFILE_LIST must not be overridden)',
+    'override ROOT := $(shell path=',
+    '/usr/bin/sed',
+    '[ -f "$$path" ] || exit 1',
+    '/usr/bin/dirname',
+    '/bin/pwd -P',
+    'export ROOT',
+    '$(error repository Makefile path could not be resolved)',
+    'cd "$$ROOT"',
+    'root-test:',
+    'scripts/test-makefile-root.sh',
+    'verify: lint test build root-test',
+  ].forEach((fragment) => {
+    if (!makefile.includes(fragment)) failures.push(`Makefile must protect verification authority: ${fragment}`);
+  });
+  ['scripts/smoke-browser.js', 'scripts/test-browser-smoke.js', '$(MAKE) --no-print-directory -f "$$ROOT/Makefile" browser'].forEach((fragment) => {
     if (!makefile.includes(fragment)) failures.push(`Makefile must preserve real-browser proof command: ${fragment}`);
+  });
+}
+
+const makeRootTestPath = path.join(root, 'scripts', 'test-makefile-root.sh');
+if (!fs.existsSync(makeRootTestPath)) {
+  failures.push('Makefile root authority test is missing');
+} else {
+  const makeRootTest = readText(makeRootTestPath);
+  ['49 executed target/authority cases', '2 MAKEFILE_LIST rejections', '1 MAKEFILES rejection', '1 multi-Makefile rejection', 'MAKEFILE_LIST must not be overridden'].forEach((fragment) => {
+    if (!makeRootTest.includes(fragment)) failures.push(`Makefile root authority test must preserve: ${fragment}`);
   });
 }
 

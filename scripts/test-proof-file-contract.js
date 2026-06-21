@@ -61,11 +61,15 @@ try {
   const makefile = fs.readFileSync(path.join(__dirname, '..', 'Makefile'), 'utf8');
   assert.strictEqual((checkerSource.match(/isContainedRegularFile\(/g) || []).length, 8);
   assert.strictEqual((checkerSource.match(/isValidIsoCalendarDate\(/g) || []).length, 1);
-  assert.ok(checkerSource.includes('Makefile must protect the repository root from command-line overrides'));
-  assert.ok(makefile.includes('override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))'));
+  assert.ok(checkerSource.includes('Makefile must protect verification authority'));
+  assert.ok(makefile.includes('override ROOT := $(shell path='));
+  assert.ok(makefile.includes('MAKEFILE_LIST must not be overridden'));
+  assert.ok(makefile.includes('MAKEFILES must be empty'));
+  assert.ok(makefile.includes('override SHELL := /bin/sh'));
   assert.ok(makefile.includes('scripts/test-proof-file-contract.js'));
   assert.ok(makefile.includes('scripts/test-browser-smoke.js'));
   assert.ok(makefile.includes('scripts/smoke-browser.js'));
+  assert.ok(makefile.includes('scripts/test-makefile-root.sh'));
 } finally {
   fs.rmSync(tempRoot, { recursive: true, force: true });
 }

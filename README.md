@@ -75,6 +75,10 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   real-browser smoke on Node.js 20 and 24 using immutable action revisions,
   read-only repository permissions, and checkout credential persistence
   disabled on pushes, pull requests, and manual runs.
+- The Make entrypoint derives its repository root from the checked-in Makefile,
+  pins `/bin/sh` command semantics, and rejects `MAKEFILES`, `MAKEFILE_LIST`,
+  and ambiguous multi-Makefile authority before any quality command runs.
+- `make root-test` executes the Make authority regression suite independently.
 - Browser processes use isolated Chrome profiles and a bounded 30-second
   timeout while preserving all interaction and screenshot checks. A completed
   DOM dump or screenshot terminates a Chrome process group even when a browser

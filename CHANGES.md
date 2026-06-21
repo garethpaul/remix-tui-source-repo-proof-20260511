@@ -1,5 +1,15 @@
 # Changes
 
+## 2026-06-21
+
+- Hardened every public Make target against caller-controlled root, shell,
+  shell-flag, preload, and Makefile-list authority.
+- Added executable regression coverage for 49 target/authority combinations,
+  both `MAKEFILE_LIST` override channels, `MAKEFILES` preloads, ambiguous
+  multi-Makefile invocation, and sensitive checkout paths.
+- Documented the fail-closed Make quality-gate contract and standalone
+  `make root-test` command.
+
 ## 2026-06-19
 
 - Resolved Chrome candidates to canonical executable files, deduplicated and
