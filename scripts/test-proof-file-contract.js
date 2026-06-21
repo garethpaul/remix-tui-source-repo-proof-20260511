@@ -65,9 +65,11 @@ try {
   assert.ok(makefile.includes('override SHELL := /bin/sh'));
   assert.ok(makefile.includes('override NODE := node'));
   assert.ok(makefile.includes('override MAKE := make'));
+  assert.ok(makefile.includes('.SECONDEXPANSION:'));
   assert.ok(makefile.includes('$(error MAKEFILE_LIST must not be overridden)'));
-  assert.ok(makefile.includes('override ROOT := $(shell path='));
+  assert.ok(makefile.includes('override ROOT := $(shell sed_path='));
   assert.ok(makefile.includes('export ROOT'));
+  assert.ok(makefile.includes('repository Makefile must be loaded alone'));
   assert.ok(makefile.includes('"$$ROOT/scripts/test-makefile-root.sh"'));
   assert.ok(makefile.includes('scripts/test-proof-file-contract.js'));
   assert.ok(makefile.includes('scripts/test-browser-smoke.js'));

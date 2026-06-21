@@ -365,16 +365,18 @@ if (!fs.existsSync(makefilePath)) {
   [
     'override SHELL := /bin/sh',
     'override .SHELLFLAGS := -c',
+    '.SECONDEXPANSION:',
     'override NODE := node',
     'override MAKE := make',
     'ifneq ($(strip $(MAKEFILES)),)',
     '$(error MAKEFILES must be empty; repository verification requires this Makefile to be loaded alone)',
     'ifneq ($(origin MAKEFILE_LIST),file)',
     '$(error MAKEFILE_LIST must not be overridden)',
-    'override ROOT := $(shell path=',
+    'override ROOT := $(shell sed_path=',
     '[ -f "$$path" ] || exit 1',
     'export ROOT',
     '$(error repository Makefile path could not be resolved)',
+    '$(error repository Makefile must be loaded alone)',
     '"$$ROOT/scripts/test-makefile-root.sh"',
   ].forEach((fragment) => {
     if (!makefile.includes(fragment)) failures.push(`Makefile must preserve authority contract: ${fragment}`);
@@ -389,7 +391,7 @@ if (!isContainedRegularFile(root, makeRootTestPath)) {
   failures.push('scripts/test-makefile-root.sh must be a contained regular file');
 } else {
   const makeRootTest = readText(makeRootTestPath);
-  ['77 executed target/authority cases', '2 MAKEFILE_LIST rejections', '1 MAKEFILES rejection', '1 multi-Makefile rejection'].forEach((fragment) => {
+  ['77 executed target/authority cases', '2 MAKEFILE_LIST rejections', '1 MAKEFILES rejection', '2 multi-Makefile rejections'].forEach((fragment) => {
     if (!makeRootTest.includes(fragment)) failures.push(`Makefile root test must preserve ${fragment}`);
   });
 }

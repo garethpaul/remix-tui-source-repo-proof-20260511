@@ -128,8 +128,9 @@ When the required SDK or runtime is unavailable, use static checks and source re
 ## Maintenance Notes
 
 - Make verification derives one canonical checked-in root, freezes runtime and
-  shell authority, and rejects preloaded or ambiguous Makefiles before running
-  proof or real-browser commands. See
+  shell authority, and rejects preloaded or ambiguous Makefiles—including
+  extra `-f` inputs before or after the repository Makefile—before running proof
+  or real-browser commands. See
   `docs/plans/2026-06-21-safe-make-authority.md`.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `VISION.md` for project direction and contribution guardrails.
