@@ -59,10 +59,16 @@ try {
 
   const checkerSource = fs.readFileSync(path.join(__dirname, 'check-proof-source.js'), 'utf8');
   const makefile = fs.readFileSync(path.join(__dirname, '..', 'Makefile'), 'utf8');
-  assert.strictEqual((checkerSource.match(/isContainedRegularFile\(/g) || []).length, 8);
+  assert.strictEqual((checkerSource.match(/isContainedRegularFile\(/g) || []).length, 9);
   assert.strictEqual((checkerSource.match(/isValidIsoCalendarDate\(/g) || []).length, 1);
-  assert.ok(checkerSource.includes('Makefile must protect the repository root from command-line overrides'));
-  assert.ok(makefile.includes('override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))'));
+  assert.ok(checkerSource.includes('Makefile must preserve authority contract'));
+  assert.ok(makefile.includes('override SHELL := /bin/sh'));
+  assert.ok(makefile.includes('override NODE := node'));
+  assert.ok(makefile.includes('override MAKE := make'));
+  assert.ok(makefile.includes('$(error MAKEFILE_LIST must not be overridden)'));
+  assert.ok(makefile.includes('override ROOT := $(shell path='));
+  assert.ok(makefile.includes('export ROOT'));
+  assert.ok(makefile.includes('"$$ROOT/scripts/test-makefile-root.sh"'));
   assert.ok(makefile.includes('scripts/test-proof-file-contract.js'));
   assert.ok(makefile.includes('scripts/test-browser-smoke.js'));
   assert.ok(makefile.includes('scripts/smoke-browser.js'));

@@ -22,6 +22,7 @@ const browserIsolationPlanPath = path.join(plansRoot, '2026-06-13-browser-smoke-
 const responsiveLayoutPlanPath = path.join(plansRoot, '2026-06-13-responsive-browser-layout.md');
 const screenshotBaselinePlanPath = path.join(plansRoot, '2026-06-13-screenshot-baseline-integrity.md');
 const makeRootOverridePlanPath = path.join(plansRoot, '2026-06-14-make-root-override-protection.md');
+const safeMakeAuthorityPlanPath = path.join(plansRoot, '2026-06-21-safe-make-authority.md');
 const chromeDiscoveryTimeoutPlanPath = path.join(plansRoot, '2026-06-17-chrome-discovery-timeout.md');
 const expectedSecurityPolicy = "default-src 'self'; script-src 'self'; style-src 'self'; base-uri 'none'; object-src 'none'";
 const failures = [];
@@ -361,11 +362,35 @@ if (!fs.existsSync(makefilePath)) {
   failures.push('Makefile is missing');
 } else {
   const makefile = readText(makefilePath);
-  if (!makefile.includes('override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))')) {
-    failures.push('Makefile must protect the repository root from command-line overrides');
-  }
-  ['scripts/smoke-browser.js', 'scripts/test-browser-smoke.js', '$(MAKE) -f "$(ROOT)/Makefile" browser'].forEach((fragment) => {
+  [
+    'override SHELL := /bin/sh',
+    'override .SHELLFLAGS := -c',
+    'override NODE := node',
+    'override MAKE := make',
+    'ifneq ($(strip $(MAKEFILES)),)',
+    '$(error MAKEFILES must be empty; repository verification requires this Makefile to be loaded alone)',
+    'ifneq ($(origin MAKEFILE_LIST),file)',
+    '$(error MAKEFILE_LIST must not be overridden)',
+    'override ROOT := $(shell path=',
+    '[ -f "$$path" ] || exit 1',
+    'export ROOT',
+    '$(error repository Makefile path could not be resolved)',
+    '"$$ROOT/scripts/test-makefile-root.sh"',
+  ].forEach((fragment) => {
+    if (!makefile.includes(fragment)) failures.push(`Makefile must preserve authority contract: ${fragment}`);
+  });
+  ['scripts/smoke-browser.js', 'scripts/test-browser-smoke.js', '$(MAKE) --no-print-directory --file "$$ROOT/Makefile" browser'].forEach((fragment) => {
     if (!makefile.includes(fragment)) failures.push(`Makefile must preserve real-browser proof command: ${fragment}`);
+  });
+}
+
+const makeRootTestPath = path.join(root, 'scripts', 'test-makefile-root.sh');
+if (!isContainedRegularFile(root, makeRootTestPath)) {
+  failures.push('scripts/test-makefile-root.sh must be a contained regular file');
+} else {
+  const makeRootTest = readText(makeRootTestPath);
+  ['77 executed target/authority cases', '2 MAKEFILE_LIST rejections', '1 MAKEFILES rejection', '1 multi-Makefile rejection'].forEach((fragment) => {
+    if (!makeRootTest.includes(fragment)) failures.push(`Makefile root test must preserve ${fragment}`);
   });
 }
 
@@ -378,6 +403,17 @@ if (fs.existsSync(makeRootOverridePlanPath)) {
   });
 } else {
   failures.push(`${rel(makeRootOverridePlanPath)} is missing`);
+}
+
+if (fs.existsSync(safeMakeAuthorityPlanPath)) {
+  const safeMakeAuthorityPlan = readText(safeMakeAuthorityPlanPath);
+  ['77 executed target, root, shell, runtime, and recursive-Make authority cases', 'Both `MAKEFILE_LIST` override channels', '`MAKEFILES` preload', 'ambiguous multiple-Makefile invocation failed closed'].forEach((evidence) => {
+    if (!safeMakeAuthorityPlan.includes(evidence)) {
+      failures.push(`${rel(safeMakeAuthorityPlanPath)} must preserve completed evidence: ${evidence}`);
+    }
+  });
+} else {
+  failures.push(`${rel(safeMakeAuthorityPlanPath)} is missing`);
 }
 
 if (fs.existsSync(chromeDiscoveryTimeoutPlanPath)) {

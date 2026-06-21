@@ -1,5 +1,11 @@
 # Changes
 
+## 2026-06-21
+
+- Made every Make quality gate safe for spaced and shell-sensitive checkout
+  paths and rejected caller-controlled root, runtime, recursive-Make, shell,
+  preload, and Makefile-list authority without changing proof content.
+
 ## 2026-06-19
 
 - Resolved Chrome candidates to canonical executable files, deduplicated and
