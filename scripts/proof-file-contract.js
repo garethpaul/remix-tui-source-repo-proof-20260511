@@ -28,7 +28,7 @@ function isContainedRegularFile(rootPath, filePath) {
     }
 
     const fileStat = fs.lstatSync(filePath);
-    if (!fileStat.isFile() || fileStat.isSymbolicLink()) {
+    if (!fileStat.isFile() || fileStat.isSymbolicLink() || fileStat.nlink !== 1) {
       return false;
     }
 

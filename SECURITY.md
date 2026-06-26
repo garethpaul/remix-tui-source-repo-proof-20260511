@@ -31,6 +31,8 @@ Helpful reports include:
   be treated as suspicious.
 - Proof source paths must resolve to regular non-symlink files within the real
   source root so lexical containment cannot be bypassed through links.
+- Proof sources and browser artifacts must have a link count of one so an
+  external hard-link path cannot mutate the same validated inode.
 - No primary dependency manifest was detected in the repository root. If dependencies are added later, include a manifest and prefer reproducible installation instructions.
 - The proof baseline fails closed if it cannot inspect tracked local secret and
   editor metadata paths, and rejects those files when tracked.
@@ -45,8 +47,8 @@ Helpful reports include:
   dimensions before digest comparison.
 - The loopback server accepts only its exact ephemeral `127.0.0.1:<port>` Host,
   `GET`, and manifest-listed regular files. Source responses, browser output,
-  and screenshot artifacts have explicit byte limits; screenshot paths may not
-  be symlinks.
+  and screenshot artifacts have explicit byte limits; source and screenshot
+  paths may not be symlinks or hard links.
 - Each launch uses isolated Chrome profiles and a bounded 30-second timeout so
   a prior process cannot retain the next process's profile lock. Completed
   artifacts terminate the Chrome process group when background helpers linger.

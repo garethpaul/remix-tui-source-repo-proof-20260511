@@ -7,7 +7,7 @@
 
 `garethpaul/remix-tui-source-repo-proof-20260511` is a static web project. The checked-in files describe a static web project with the structure summarized below.
 
-This README is based on the checked-in source, manifests, scripts, and repository metadata on the `main` branch. The project language mix found during review was: JavaScript (1).
+This README is based on the checked-in source, manifests, scripts, and repository metadata on the `main` branch. The project language mix found during review was: JavaScript (7).
 
 ## Repository Contents
 
@@ -54,8 +54,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - The proof manifest records SHA-256 digests for the HTML, JavaScript, and CSS
   proof files.
 - The proof validator keeps manifest entries and HTML asset references inside
-  `poe-source`, rejects symlinks and non-regular files, and requires a valid
-  calendar date in manifest provenance metadata.
+  `poe-source`, rejects symlinks, hard links, and non-regular files, and requires
+  a valid calendar date in manifest provenance metadata.
 - The proof status message is exposed as a polite live region for assistive
   technology.
 - The proof demo buttons update the status live region through the checked-in
@@ -67,7 +67,7 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Run `make check` before committing proof source changes.
 - `make check` delegates to `make verify`, which runs the dependency-free source
   proof checks and proof-file contract tests for manifest metadata, file
-  digests, regular non-symlink files, local HTML links, the self-only security
+  digests, singly linked regular files, local HTML links, the self-only security
   policy, and the `GameLogic.runDemo()` summary. When Chrome is available it
   also runs a real-browser smoke for both controls, desktop/mobile screenshots,
   and responsive status/button geometry.
@@ -161,6 +161,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   own-property lookup guard.
 - See `docs/plans/2026-06-12-proof-file-metadata-integrity.md` for regular-file,
   real-path containment, and calendar-date validation.
+- See `docs/plans/2026-06-26-proof-hard-link-integrity.md` for single-link proof
+  asset ownership and browser-read revalidation.
 - See `docs/plans/2026-06-12-real-browser-proof-smoke.md` for Chrome interaction
   and desktop/mobile screenshot validation.
 - See `docs/plans/2026-06-13-responsive-browser-layout.md` for rendered

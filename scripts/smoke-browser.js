@@ -115,6 +115,7 @@ function readBoundedRegularFile(filePath, { minimumBytes = 0, maximumBytes }) {
   const stat = fs.lstatSync(filePath);
   if (stat.isSymbolicLink()) throw new Error(`${filePath} must not be a symlink`);
   if (!stat.isFile()) throw new Error(`${filePath} must be a regular file`);
+  if (stat.nlink !== 1) throw new Error(`${filePath} must not be a hard link`);
   if (stat.size < minimumBytes) throw new Error(`${filePath} is below the ${minimumBytes}-byte minimum`);
   if (stat.size > maximumBytes) throw new Error(`${filePath} exceeds the ${maximumBytes}-byte limit`);
 
@@ -122,7 +123,9 @@ function readBoundedRegularFile(filePath, { minimumBytes = 0, maximumBytes }) {
   const descriptor = fs.openSync(filePath, flags);
   try {
     const openedStat = fs.fstatSync(descriptor);
-    if (!openedStat.isFile() || openedStat.size !== stat.size) throw new Error(`${filePath} changed while opening`);
+    if (!openedStat.isFile() || openedStat.nlink !== 1 || openedStat.size !== stat.size) {
+      throw new Error(`${filePath} changed while opening`);
+    }
     const contents = Buffer.alloc(openedStat.size);
     let offset = 0;
     while (offset < contents.length) {

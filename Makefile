@@ -36,6 +36,7 @@ browser:
 test: lint
 	$(NODE) "$$ROOT/scripts/test-proof-file-contract.js"
 	$(NODE) "$$ROOT/scripts/test-browser-smoke.js"
+	$(NODE) "$$ROOT/scripts/test-hard-link-mutations.js"
 	$(MAKE) --no-print-directory --file "$$ROOT/Makefile" browser
 
 build:
