@@ -195,6 +195,10 @@ async function main() {
   fs.symlinkSync(artifact, linkedArtifact);
   assert.throws(() => readBoundedRegularFile(linkedArtifact, { minimumBytes: 1, maximumBytes: 1024 }), /symlink/u);
 
+  const hardLinkedArtifact = path.join(artifactRoot, 'hard-linked.png');
+  fs.linkSync(artifact, hardLinkedArtifact);
+  assert.throws(() => readBoundedRegularFile(hardLinkedArtifact, { minimumBytes: 1, maximumBytes: 1024 }), /hard link/u);
+
   const server = createServer();
   const port = await listen(server);
   try {
@@ -223,6 +227,8 @@ async function main() {
 
   const makefile = fs.readFileSync(path.join(__dirname, '..', 'Makefile'), 'utf8');
   const smokeSource = fs.readFileSync(path.join(__dirname, 'smoke-browser.js'), 'utf8');
+  assert.ok(smokeSource.includes('stat.nlink !== 1'));
+  assert.ok(smokeSource.includes('openedStat.nlink !== 1'));
   assert.ok(makefile.includes('scripts/test-browser-smoke.js'));
   assert.ok(makefile.includes('scripts/smoke-browser.js'));
   assert.ok(smokeSource.includes('assertScreenshotPair(name, screenshot, blank, viewport);'));

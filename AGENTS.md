@@ -24,7 +24,7 @@
 
 ## Coding conventions
 
-- Language mix noted in the README: JavaScript (1).
+- Language mix noted in the README: JavaScript (7).
 
 ## Testing guidance
 
@@ -48,6 +48,8 @@
 - See `docs/plans/2026-06-08-remix-tui-source-proof-baseline.md` for the canonical static proof validation baseline.
 - See `docs/plans/2026-06-08-proof-file-digests.md` for the proof digest validation baseline.
 - See `docs/plans/2026-06-09-proof-path-containment.md` for the source-root path containment guard.
+- See `docs/plans/2026-06-26-proof-hard-link-integrity.md` for single-link proof
+  asset and browser artifact ownership.
 
 ## Agent workflow
 

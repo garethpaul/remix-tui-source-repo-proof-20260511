@@ -45,6 +45,7 @@ Priority:
 - Keep proof and blank screenshot baselines recognizable by their PNG/IHDR
   headers and matched to their declared viewports before comparison
 - Keep local secrets and editor metadata out of the checked-in proof artifact
+- Require proof assets and browser artifacts to be singly linked regular files
 - Avoid adding runtime dependencies without a manifest update
 
 Next priorities:

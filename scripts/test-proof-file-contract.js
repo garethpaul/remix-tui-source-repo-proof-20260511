@@ -41,6 +41,10 @@ try {
   fs.symlinkSync(externalFile, fileSymlink);
   assert.strictEqual(isContainedRegularFile(sourceRoot, fileSymlink), false);
 
+  const fileHardLink = path.join(sourceRoot, 'hard-linked.js');
+  fs.linkSync(externalFile, fileHardLink);
+  assert.strictEqual(isContainedRegularFile(sourceRoot, fileHardLink), false);
+
   const linkedDirectory = path.join(sourceRoot, 'linked-assets');
   fs.symlinkSync(externalRoot, linkedDirectory, 'dir');
   assert.strictEqual(isContainedRegularFile(sourceRoot, path.join(linkedDirectory, 'outside.js')), false);
@@ -58,8 +62,11 @@ try {
   });
 
   const checkerSource = fs.readFileSync(path.join(__dirname, 'check-proof-source.js'), 'utf8');
+  const contractSource = fs.readFileSync(path.join(__dirname, 'proof-file-contract.js'), 'utf8');
   const makefile = fs.readFileSync(path.join(__dirname, '..', 'Makefile'), 'utf8');
-  assert.strictEqual((checkerSource.match(/isContainedRegularFile\(/g) || []).length, 9);
+  assert.ok(contractSource.includes('fileStat.nlink !== 1'));
+  assert.ok(checkerSource.includes('proof-hard-link-integrity.md'));
+  assert.strictEqual((checkerSource.match(/isContainedRegularFile\(/g) || []).length, 11);
   assert.strictEqual((checkerSource.match(/isValidIsoCalendarDate\(/g) || []).length, 1);
   assert.ok(checkerSource.includes('Makefile must preserve authority contract'));
   assert.ok(makefile.includes('override SHELL := /bin/sh'));

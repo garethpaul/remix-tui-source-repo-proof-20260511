@@ -1,5 +1,57 @@
 # Changes
 
+## 2026-06-26 14:44 PDT - P1 - Reject hard-linked proof files
+
+### Summary
+
+Closed an inode-ownership gap where a proof asset or browser artifact could be
+a regular hard link to an externally mutable path while still passing symlink
+and real-path containment checks.
+
+### Work completed
+
+- Required a link count of one in the shared proof-file contract.
+- Rechecked link ownership on opened browser source and screenshot descriptors.
+- Added behavioral hard-link regressions and static policy registration.
+
+### Threads
+
+- None; the focused contract, browser reader, tests, and documentation work was
+  completed directly.
+
+### Files changed
+
+- `scripts/proof-file-contract.js` — reject multiply linked proof files.
+- `scripts/smoke-browser.js` — reject and revalidate hard-linked artifacts.
+- `scripts/test-proof-file-contract.js`, `scripts/test-browser-smoke.js` — causal
+  external hard-link regressions.
+- `scripts/check-proof-source.js` — enforce guards, tests, and completed plan.
+- `README.md`, `SECURITY.md`, `VISION.md`, `AGENTS.md`,
+  `docs/plans/2026-06-26-proof-hard-link-integrity.md` — document the boundary.
+
+### Validation
+
+- Focused file and browser contract tests — passed.
+- Eight hostile hard-link mutations — rejected.
+- Node 20.20.2 and 24.17.0 `make check` — passed with 77 Make authority
+  cases, source validation, contract tests, eight mutations, and real Chrome
+  desktop/mobile interaction and screenshot checks.
+- Absolute external-directory Make verification with `ROOT=/tmp` — passed.
+- Hosted validation — pending.
+
+### Bugs / findings
+
+- P1 fixed: `isContainedRegularFile` accepted a proof path sharing its inode
+  with an external file, and the bounded browser reader accepted the same state.
+
+### Blockers
+
+- None locally; hosted Node, Chrome, and CodeQL checks remain pending.
+
+### Next action
+
+- Open the PR and require exact-head hosted Node, Chrome, and CodeQL checks.
+
 ## 2026-06-21
 
 - Made every Make quality gate safe for spaced and shell-sensitive checkout

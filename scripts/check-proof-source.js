@@ -24,6 +24,7 @@ const screenshotBaselinePlanPath = path.join(plansRoot, '2026-06-13-screenshot-b
 const makeRootOverridePlanPath = path.join(plansRoot, '2026-06-14-make-root-override-protection.md');
 const safeMakeAuthorityPlanPath = path.join(plansRoot, '2026-06-21-safe-make-authority.md');
 const chromeDiscoveryTimeoutPlanPath = path.join(plansRoot, '2026-06-17-chrome-discovery-timeout.md');
+const hardLinkIntegrityPlanPath = path.join(plansRoot, '2026-06-26-proof-hard-link-integrity.md');
 const expectedSecurityPolicy = "default-src 'self'; script-src 'self'; style-src 'self'; base-uri 'none'; object-src 'none'";
 const failures = [];
 let expectedDemoSummary = 'Repo crystal rally source complete';
@@ -333,6 +334,8 @@ if (fs.existsSync(browserSmokePath)) {
     "detached: process.platform !== 'win32'",
     "process.kill(-processHandle.pid, 'SIGKILL')",
     'function readBoundedRegularFile(filePath, { minimumBytes = 0, maximumBytes })',
+    'if (stat.nlink !== 1)',
+    'openedStat.nlink !== 1',
     "if (request.headers.host !== expectedHost)",
     "if (request.method !== 'GET')",
     'function assertRequestLog(requestLog)',
@@ -348,6 +351,7 @@ if (fs.existsSync(browserSmokeTestPath)) {
     'maxBrowserOutputBytes + 1',
     "resolveExecutable('./chrome'",
     "readBoundedRegularFile(linkedArtifact",
+    "readBoundedRegularFile(hardLinkedArtifact",
     "method: 'POST'",
     "host: `localhost:${port}`",
     "pathname: '/unexpected.js'",
@@ -355,6 +359,51 @@ if (fs.existsSync(browserSmokeTestPath)) {
   ].forEach((fragment) => {
     if (!browserSmokeTest.includes(fragment)) failures.push(`browser smoke tests must preserve hostile ownership coverage: ${fragment}`);
   });
+}
+
+const proofFileContractPath = path.join(root, 'scripts', 'proof-file-contract.js');
+const proofFileContractTestPath = path.join(root, 'scripts', 'test-proof-file-contract.js');
+for (const contractPath of [proofFileContractPath, proofFileContractTestPath]) {
+  if (!isContainedRegularFile(root, contractPath)) {
+    failures.push(`${rel(contractPath)} must be a singly linked contained regular file`);
+  }
+}
+if (fs.existsSync(proofFileContractPath) && !readText(proofFileContractPath).includes('fileStat.nlink !== 1')) {
+  failures.push('proof file contract must reject multiply linked proof files');
+}
+if (fs.existsSync(proofFileContractTestPath) && !readText(proofFileContractTestPath).includes('fileHardLink')) {
+  failures.push('proof file contract tests must cover an external hard link');
+}
+
+if (fs.existsSync(hardLinkIntegrityPlanPath)) {
+  const hardLinkIntegrityPlan = readText(hardLinkIntegrityPlanPath);
+  ['Status: Completed', 'Eight hostile mutations', 'make check', 'external hard link'].forEach((evidence) => {
+    if (!hardLinkIntegrityPlan.includes(evidence)) {
+      failures.push(`${rel(hardLinkIntegrityPlanPath)} must preserve completed evidence: ${evidence}`);
+    }
+  });
+} else {
+  failures.push(`${rel(hardLinkIntegrityPlanPath)} is missing`);
+}
+
+const hardLinkMutationPath = path.join(root, 'scripts', 'test-hard-link-mutations.js');
+if (!isContainedRegularFile(root, hardLinkMutationPath)) {
+  failures.push('scripts/test-hard-link-mutations.js must be a singly linked contained regular file');
+} else if (!readText(hardLinkMutationPath).includes('hard-link mutations passed (8 mutations)')) {
+  failures.push('hard-link mutation suite must preserve all eight mutations');
+}
+
+for (const [relativePath, fragment] of [
+  ['README.md', 'rejects symlinks, hard links, and non-regular files'],
+  ['SECURITY.md', 'external hard-link path cannot mutate the same validated inode'],
+  ['VISION.md', 'singly linked regular files'],
+  ['AGENTS.md', 'proof-hard-link-integrity.md'],
+  ['CHANGES.md', 'Reject hard-linked proof files'],
+]) {
+  const documentationPath = path.join(root, relativePath);
+  if (!fs.existsSync(documentationPath) || !readText(documentationPath).includes(fragment)) {
+    failures.push(`${relativePath} must document proof hard-link ownership`);
+  }
 }
 
 const makefilePath = path.join(root, 'Makefile');
@@ -381,7 +430,7 @@ if (!fs.existsSync(makefilePath)) {
   ].forEach((fragment) => {
     if (!makefile.includes(fragment)) failures.push(`Makefile must preserve authority contract: ${fragment}`);
   });
-  ['scripts/smoke-browser.js', 'scripts/test-browser-smoke.js', '$(MAKE) --no-print-directory --file "$$ROOT/Makefile" browser'].forEach((fragment) => {
+  ['scripts/smoke-browser.js', 'scripts/test-browser-smoke.js', 'scripts/test-hard-link-mutations.js', '$(MAKE) --no-print-directory --file "$$ROOT/Makefile" browser'].forEach((fragment) => {
     if (!makefile.includes(fragment)) failures.push(`Makefile must preserve real-browser proof command: ${fragment}`);
   });
 }
