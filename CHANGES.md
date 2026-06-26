@@ -37,7 +37,8 @@ and real-path containment checks.
   cases, source validation, contract tests, eight mutations, and real Chrome
   desktop/mobile interaction and screenshot checks.
 - Absolute external-directory Make verification with `ROOT=/tmp` — passed.
-- Hosted validation — pending.
+- Hosted Node/Chrome runs `28267079586` and `28267081326`, plus CodeQL run
+  `28267080325` — passed on the initial PR head.
 
 ### Bugs / findings
 
@@ -46,11 +47,12 @@ and real-path containment checks.
 
 ### Blockers
 
-- None locally; hosted Node, Chrome, and CodeQL checks remain pending.
+- Codex review was attempted once and skipped after HTTP 401 authentication
+  failures, as permitted by the maintenance workflow.
 
 ### Next action
 
-- Open the PR and require exact-head hosted Node, Chrome, and CodeQL checks.
+- Merge only after exact-head hosted Node, Chrome, and CodeQL checks pass.
 
 ## 2026-06-21
 
